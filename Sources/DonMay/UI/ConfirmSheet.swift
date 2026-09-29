@@ -47,11 +47,15 @@ struct ConfirmSheet: View {
                 Button("Dọn và ghi vào Lịch sử") { Task { await state.cleanSelected() } }
                     .buttonStyle(.borderedProminent).tint(Palette.safe)
                     .keyboardShortcut(.defaultAction)
-                    .disabled(!irreversible.isEmpty && typed.uppercased() != confirmWord)
+                    .disabled(!irreversible.isEmpty && !Self.matchesConfirmWord(typed))
             }
         }
         .padding(24)
         .frame(width: 560)
+    }
+
+    static func matchesConfirmWord(_ text: String) -> Bool {
+        text.trimmingCharacters(in: .whitespaces).folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil) == "xoa"
     }
 
     private func figure(_ title: String, _ value: Int64) -> some View {

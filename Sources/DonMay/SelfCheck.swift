@@ -128,6 +128,27 @@ enum SelfCheck {
                "Bản nén vừa tạo được giữ dù ổ đang gần đầy")
         try? fm.removeItem(at: freshArchive)
 
+        expect(ConfirmSheet.matchesConfirmWord("XOÁ") && ConfirmSheet.matchesConfirmWord("xóa") && ConfirmSheet.matchesConfirmWord(" XOA "),
+               "Xác nhận chấp nhận XOÁ, xóa, XOA")
+        expect(!ConfirmSheet.matchesConfirmWord("xo") && !ConfirmSheet.matchesConfirmWord(""), "Xác nhận từ chối chữ khác")
+
+        let brokenSource = fm.homeDirectoryForCurrentUser.appendingPathComponent("Library/Caches/donmay-missing-\(UUID().uuidString)")
+        let brokenItem = CleanItem(id: "b", app: .zen, name: "nén lỗi", reason: "", displayPath: "", size: 1, lastUsed: nil,
+                                   risk: .warn, undo: .backup, growth24: 0, growth7: 0, action: .files([brokenSource.path]), regenerateHint: "")
+        let brokenDone = DispatchSemaphore(value: 0)
+        var brokenSession: HistorySession?
+        Task.detached {
+            brokenSession = await Cleaner.clean([brokenItem], backups: ["b"]) { _, _ in }
+            brokenDone.signal()
+        }
+        brokenDone.wait()
+        if let session = brokenSession {
+            let folder = AppFolders.backups.appendingPathComponent(session.id.uuidString)
+            let leftovers = (try? fm.contentsOfDirectory(atPath: folder.path)) ?? []
+            expect(session.entries.first?.outcome == .failed && leftovers.isEmpty, "Nén hỏng thì không để lại tệp .aar dở")
+            try? fm.removeItem(at: folder)
+        }
+
         print(ok ? "Tất cả đạt" : "Có mục hỏng")
         return ok
     }

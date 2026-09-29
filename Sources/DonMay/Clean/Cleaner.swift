@@ -19,6 +19,8 @@ enum Cleaner {
     private static func clean(_ item: CleanItem, backup: Bool, sessionID: UUID) -> HistoryEntry {
         var entry = HistoryEntry(app: item.app, name: item.name, paths: paths(of: item.action), size: item.size,
                                  outcome: .regenerated, regenerateHint: item.regenerateHint)
+        let archive = AppFolders.backups.appendingPathComponent(sessionID.uuidString)
+            .appendingPathComponent(entry.id.uuidString + ".aar")
         do {
             switch item.action {
             case let .simulatorDevice(udid):
@@ -31,8 +33,6 @@ enum Cleaner {
             case let .files(paths):
                 try paths.forEach(Safety.check)
                 if item.undo == .backup && backup {
-                    let archive = AppFolders.backups.appendingPathComponent(sessionID.uuidString)
-                        .appendingPathComponent(entry.id.uuidString + ".aar")
                     try ensureRoomForArchive(of: item)
                     guard paths.count == 1 else { throw Archiver.Failure(message: "Chỉ sao lưu được một thư mục mỗi mục") }
                     entry.archiveSize = try Archiver.archive(directory: URL(fileURLWithPath: paths[0]), to: archive)
@@ -55,8 +55,9 @@ enum Cleaner {
         } catch {
             entry.outcome = .failed
             entry.error = error.localizedDescription
-            if let archive = entry.archivePath { try? FileManager.default.removeItem(atPath: archive) }
+            try? FileManager.default.removeItem(at: archive)
             entry.archivePath = nil
+            entry.archiveSize = nil
         }
         return entry
     }

@@ -17,6 +17,7 @@ final class AppState {
 
     var selection = Set<String>()
     var backupChoices = Set<String>()
+    private var decidedBackups = Set<String>()
     var filter: Risk?
     var query = ""
 
@@ -91,13 +92,15 @@ final class AppState {
         }
         items = found
         let ids = Set(found.map(\.id))
-        selection.formIntersection(ids)
-        var room = backupBudget - archivesInUse
-        backupChoices = Set(found.filter { $0.undo == .backup }.sorted { $0.size < $1.size }.compactMap { item in
-            guard item.estimatedPackedSize <= room else { return nil }
+        selection = selection.intersection(Set(found.filter { $0.risk != .keep }.map(\.id)))
+        backupChoices.formIntersection(ids)
+        var room = backupBudget - archivesInUse - found.filter { backupChoices.contains($0.id) }.reduce(0) { $0 + $1.estimatedPackedSize }
+        for item in found.filter({ $0.undo == .backup && !decidedBackups.contains($0.id) }).sorted(by: { $0.size < $1.size }) {
+            decidedBackups.insert(item.id)
+            guard item.estimatedPackedSize <= room else { continue }
             room -= item.estimatedPackedSize
-            return item.id
-        })
+            backupChoices.insert(item.id)
+        }
         diskFree = SystemMetrics.diskFree()
         trashSize = Cleaner.trashSize()
         lastScan = Date()
@@ -200,6 +203,7 @@ final class AppState {
         append(&gpuHistory, SystemMetrics.gpuUtilization() ?? 0)
         append(&memoryHistory, Double(memory.used) / Double(max(memory.total, 1)))
         diskFree = SystemMetrics.diskFree()
+        guard route == .performance else { return }
         Task {
             let top = await Task.detached { SystemMetrics.topProcesses() }.value
             processes = top

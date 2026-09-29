@@ -186,7 +186,10 @@ enum Rules {
             let state = (try? Data(contentsOf: job.under("state.json"))).flatMap { try? JSONDecoder().decode(JobState.self, from: $0) }
             let updated = state?.updatedAt.flatMap(iso.date(from:))
             let title = state?.name.map { "Job \(job.lastPathComponent) · \(shortened($0))" } ?? "Job \(job.lastPathComponent)"
-            list.append(Candidate(app: .claude, name: title, urls: [job], regenerateHint: "Job đã xong, không cần tạo lại",
+            let scratch = job.under("tmp")
+            guard scratch.exists else { continue }
+            list.append(Candidate(app: .claude, name: title + " · dữ liệu tạm", urls: [scratch],
+                                  regenerateHint: "Chỉ xoá thư mục tmp, job vẫn còn trong danh sách của Claude",
                                   lastUsed: updated) { m in
                 let recent = (updated ?? m.lastModified ?? .distantPast) > Date().addingTimeInterval(-30 * 60)
                 switch state?.state {
@@ -350,16 +353,33 @@ enum Rules {
         return list
     }
 
+    /// "Xcode_26.1.xip", "Figma-124.3.dmg" → có "Xcode.app", "Figma.app" trong /Applications.
+    private static func isInstalled(_ installer: URL) -> Bool {
+        let stem = installer.deletingPathExtension().lastPathComponent.lowercased()
+        let token = stem.split(whereSeparator: { "_- .".contains($0) || $0.isNumber }).first.map(String.init) ?? stem
+        guard token.count >= 3 else { return false }
+        let apps = (try? FileManager.default.contentsOfDirectory(atPath: "/Applications")) ?? []
+        return apps.contains { $0.lowercased().hasPrefix(token) && $0.hasSuffix(".app") }
+    }
+
     static func downloads() -> [Candidate] {
         guard let root = AppKind.downloads.folder else { return [] }
         let files = root.children().filter { !$0.isDirectory && !$0.lastPathComponent.hasPrefix(".") }
         var list: [Candidate] = []
 
         let installers = files.filter { ["dmg", "pkg", "xip", "mpkg"].contains($0.pathExtension.lowercased()) }
-        if !installers.isEmpty {
-            list.append(Candidate(app: .downloads, name: "\(installers.count) bộ cài (.dmg, .pkg, .xip)", urls: installers,
-                                  regenerateHint: "Tải lại từ trang gốc", id: "downloads:installers") { _ in
-                (.safe, "Bộ cài thường không cần sau khi đã cài")
+        let installed = installers.filter(isInstalled)
+        let pending = installers.filter { !installed.contains($0) }
+        if !installed.isEmpty {
+            list.append(Candidate(app: .downloads, name: "\(installed.count) bộ cài đã cài xong", urls: installed,
+                                  regenerateHint: "Tải lại từ trang gốc", id: "downloads:installed") { _ in
+                (.safe, "Ứng dụng tương ứng đã có trong Applications")
+            })
+        }
+        if !pending.isEmpty {
+            list.append(Candidate(app: .downloads, name: "\(pending.count) bộ cài chưa thấy ứng dụng tương ứng", urls: pending,
+                                  regenerateHint: "Tải lại từ trang gốc nếu còn", id: "downloads:pending") { _ in
+                (.warn, "Có thể là bản duy nhất của phần mềm Ngài đã mua")
             })
         }
 

@@ -31,12 +31,16 @@ enum Format {
         return formatter
     }()
 
-    private static func decimal(_ value: Double, digits: Int) -> String {
+    private static let decimalFormatters: [Int: NumberFormatter] = Dictionary(uniqueKeysWithValues: [0, 1].map { digits in
         let formatter = NumberFormatter()
         formatter.locale = Locale(identifier: "vi_VN")
         formatter.minimumFractionDigits = digits
         formatter.maximumFractionDigits = digits
-        return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
+        return (digits, formatter)
+    })
+
+    private static func decimal(_ value: Double, digits: Int) -> String {
+        decimalFormatters[digits]?.string(from: NSNumber(value: value)) ?? "\(value)"
     }
 
     static func abbreviatingHome(_ path: String) -> String {
