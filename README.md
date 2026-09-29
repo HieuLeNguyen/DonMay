@@ -50,7 +50,7 @@ scripts/build-app.sh
 open build/DonMay.app
 ```
 
-`scripts/build-app.sh` build bản release, đóng gói `build/DonMay.app` kèm biểu tượng và ký ad-hoc. Muốn dùng lâu dài thì kéo `DonMay.app` vào `/Applications`.
+`scripts/build-app.sh` build bản release universal (chip Apple và Intel), đóng gói `build/DonMay.app` kèm biểu tượng và ký ad-hoc. `scripts/make-dmg.sh` đóng tiếp thành `build/DonMay.dmg` để mang sang máy khác: mở ra, kéo vào Applications; lần đầu chuột phải › Open vì chưa có chữ ký Developer ID. Muốn dùng lâu dài thì kéo `DonMay.app` vào `/Applications`.
 
 Script ký với danh tính theo bundle id (`designated => identifier "studio.thapp.donmay"`), nên **quyền đã cấp được giữ qua các lần build lại**. Ký ad-hoc mặc định gắn danh tính với mã băm của tệp chạy: mỗi lần build là một ứng dụng mới trong mắt macOS và bị hỏi quyền lại. Có chứng chỉ Developer ID riêng thì chạy `SIGN_IDENTITY="Developer ID Application: …" scripts/build-app.sh`.
 
@@ -170,6 +170,7 @@ swift build
 Package.swift                  SwiftPM, macOS 14, một executable target
 Resources/AppIcon.icns         biểu tượng cho gói .app
 scripts/build-app.sh           build release và đóng gói build/DonMay.app
+scripts/make-dmg.sh            đóng build/DonMay.app thành build/DonMay.dmg
 Sources/DonMay/
   DonMayApp.swift              điểm vào, AppDelegate
   SelfCheck.swift              --self-test và --scan-report
