@@ -74,11 +74,11 @@ Không cấp Full Disk Access thì mọi tính năng khác vẫn chạy; thẻ T
 
 ## Hướng dẫn sử dụng
 
-1. **Tổng quan** — mở ứng dụng là quét ngay. Màn đầu cho biết:
-   - dung lượng còn trống và thanh phân bổ (xanh: dọn an toàn, cam: cần cân nhắc);
-   - ba việc nên làm: *Dọn an toàn*, *Đang phình to*, *Cần Ngài quyết*;
-   - danh sách **chỗ đang phình to**, sắp theo mức tăng;
-   - thẻ từng nhóm ứng dụng.
+1. **Tổng quan** — mở ứng dụng là quét ngay. Màn đầu trả lời "cái gì đang tăng":
+   - **vòng ổ đĩa** với dung lượng còn trống (đỏ khi dưới 10%) và nút *Chọn dọn an toàn*;
+   - **Ghi mới 7 ngày qua**: tổng dung lượng được ghi thêm và thanh cho từng ứng dụng, sắp từ nhiều tới ít; `^^` đỏ là tăng bất thường, `^` cam là đang tăng;
+   - **Theo nhóm**: thẻ từng ứng dụng với dung lượng, mức tăng và tỉ lệ an toàn / cân nhắc;
+   - **Cảnh báo**: ổ gần đầy, ba chỗ tăng mạnh nhất, thiếu Full Disk Access, máy chạy quá 7 ngày chưa khởi động lại. Bấm một cảnh báo để mở đúng chỗ cần xử lý.
 2. **Chọn mục** — bấm *Chọn N mục* để chọn mọi mục an toàn, hoặc vào từng nhóm ở thanh bên và tick từng mục. Mục *Nên giữ* không tick được.
 3. **Dọn** — thanh dưới cùng cho biết sẽ lấy lại bao nhiêu. Bấm *Dọn các mục đã chọn*, xem lại hộp xác nhận:
    - các mục cần cân nhắc và lý do;

@@ -51,7 +51,7 @@ enum MachineInfoReader {
         return info
     }
 
-    private static func bootTime() -> Date? {
+    static func bootTime() -> Date? {
         var time = timeval()
         var size = MemoryLayout<timeval>.size
         guard sysctlbyname("kern.boottime", &time, &size, nil, 0) == 0, time.tv_sec > 0 else { return nil }
@@ -62,14 +62,15 @@ enum MachineInfoReader {
     private static func lastShutdown(before boot: Date?) -> Date? {
         guard let data = try? Shell.run("/usr/bin/last", ["shutdown"]), let text = String(data: data, encoding: .utf8),
               let line = text.split(separator: "\n").first(where: { $0.hasPrefix("shutdown") }) else { return nil }
-        let stamp = line.split(separator: " ", omittingEmptySubsequences: true).suffix(4).joined(separator: " ")
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "EEE MMM d HH:mm"
-        let alt = DateFormatter()
-        alt.locale = Locale(identifier: "en_US_POSIX")
-        alt.dateFormat = "EEE d MMM HH:mm"
-        guard let parsed = formatter.date(from: stamp) ?? alt.date(from: stamp) else { return nil }
+        // Bỏ thứ trong tuần: DateFormatter từ chối "Fri 18 Sep" vì năm mặc định 2000 khiến ngày 18/09 không phải thứ Sáu.
+        let stamp = line.split(separator: " ", omittingEmptySubsequences: true).suffix(3).joined(separator: " ")
+        let parsed = ["d MMM HH:mm", "MMM d HH:mm"].lazy.compactMap { pattern -> Date? in
+            let formatter = DateFormatter()
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.dateFormat = pattern
+            return formatter.date(from: stamp)
+        }.first
+        guard let parsed else { return nil }
         let calendar = Calendar.current
         var parts = calendar.dateComponents([.month, .day, .hour, .minute], from: parsed)
         parts.year = calendar.component(.year, from: Date())

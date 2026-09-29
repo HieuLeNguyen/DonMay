@@ -130,24 +130,3 @@ struct ScanBanner: View {
         .background(Palette.safe.opacity(0.08))
     }
 }
-
-/// Chưa có Full Disk Access: báo phần nào đang bị bỏ qua và mở thẳng mục cài đặt.
-struct FullDiskAccessHint: View {
-    @Environment(AppState.self) private var state
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "lock.shield").font(.title2).foregroundStyle(Palette.warn)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Chưa có Full Disk Access").fontWeight(.semibold)
-                Text("Dọn Máy đang bỏ qua bản cài lên iPhone thật của Xcode và Thùng rác để macOS không hỏi quyền liên tục. Cấp quyền một lần là quét đủ, không bị hỏi nữa.")
-                    .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer()
-            Button("Mở cài đặt") { Permissions.openFullDiskAccessSettings() }
-            Button("Kiểm tra lại") { Task { await state.scan() } }
-        }
-        .padding(14)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Palette.warn.opacity(0.1)))
-    }
-}
