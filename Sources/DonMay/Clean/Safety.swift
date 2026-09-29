@@ -27,6 +27,8 @@ enum Safety {
 
     static func check(_ path: String) throws {
         let url = URL(fileURLWithPath: path).standardizedFileURL
+        if url.deletingLastPathComponent().path == "/Applications" && url.lastPathComponent.hasPrefix("Install macOS")
+            && url.pathExtension == "app" { return }
         let resolved = url.deletingLastPathComponent().resolvingSymlinksInPath().appendingPathComponent(url.lastPathComponent).path
         guard let root = allowedRoots.first(where: { resolved.hasPrefix($0 + "/") }) else {
             throw Refusal(path: path, reason: "nằm ngoài các vị trí được phép dọn")
@@ -34,8 +36,11 @@ enum Safety {
         if resolved.contains("/.git/") || resolved.hasSuffix("/.git") {
             throw Refusal(path: path, reason: "là kho git")
         }
-        if root.hasSuffix("/Documents") && !buildFolders.contains(url.lastPathComponent) {
-            throw Refusal(path: path, reason: "trong Documents chỉ được xoá thư mục build")
+        if root.hasSuffix("/Documents") {
+            let inside = resolved.dropFirst(root.count + 1).split(separator: "/").map(String.init)
+            guard inside.contains(where: buildFolders.contains) else {
+                throw Refusal(path: path, reason: "trong Documents chỉ được xoá thư mục build hoặc thứ nằm trong nó")
+            }
         }
         if (root.hasSuffix("/Desktop") || root.hasSuffix("/Downloads")) && url.deletingLastPathComponent().path != root {
             throw Refusal(path: path, reason: "chỉ được xoá tệp nằm ngay trong Desktop hoặc Downloads")

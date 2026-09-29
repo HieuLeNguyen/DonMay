@@ -8,7 +8,7 @@ enum Rules {
     static func all(finding: (AppKind) -> Void = { _ in }) -> [Candidate] {
         let groups: [(AppKind, () -> [Candidate])] = [
             (.xcode, xcode), (.simulator, simulator), (.claude, claude), (.zen, zen), (.figma, figma), (.pencil, pencil),
-            (.cli, cli), (.documents, documents), (.desktop, desktop), (.downloads, downloads),
+            (.cli, cli), (.documents, documents), (.desktop, desktop), (.downloads, downloads), (.macos, macos),
         ]
         return groups.flatMap { app, rule in
             finding(app)
@@ -300,6 +300,23 @@ enum Rules {
             ("Codex runtimes", home.under(".cache", "codex-runtimes"), .warn, "Codex CLI tải lại khi chạy"),
             ("Gradle", home.under(".gradle", "caches"), .safe, "Gradle tải lại khi build"),
         ].filter { $0.1.exists }.map { .fixed(.cli, $0.0, $0.1, $0.2, $0.3) }
+    }
+
+    // MARK: - Cập nhật macOS
+
+    static func macos() -> [Candidate] {
+        var list = MachineInfoReader.installers().map {
+            Candidate.fixed(.macos, $0.deletingPathExtension().lastPathComponent, $0, .warn,
+                            "Bộ cài macOS đầy đủ. Tải lại được từ App Store", hint: "Tải lại từ App Store")
+        }
+        let downloads = MachineInfoReader.updateDownloadLocations.map(URL.init(fileURLWithPath:)).filter(\.exists)
+        if !downloads.isEmpty {
+            list.append(Candidate(app: .macos, name: "Bản cập nhật macOS đã tải sẵn", urls: downloads,
+                                  regenerateHint: "macOS tải lại khi cần", id: "macos:updates") { _ in
+                (.keep, "Thư mục của hệ thống, cần quyền quản trị. Tắt Tự tải trong Cài đặt › Cập nhật phần mềm")
+            })
+        }
+        return list
     }
 
     // MARK: - Thư mục

@@ -23,6 +23,9 @@ final class AppState {
     var lastScan: Date?
 
     var selection = Set<String>()
+    /// Mục chỉ dọn một phần: những đường dẫn con được chọn và tổng dung lượng của chúng.
+    var partial: [String: PartialChoice] = [:]
+    var showingMachineInfo = false
     var backupChoices = Set<String>()
     private var decidedBackups = Set<String>()
     var filter: Risk?
@@ -69,7 +72,28 @@ final class AppState {
         items.filter { $0.level != .flat }.sorted { ($0.level, $0.growth7) > ($1.level, $1.growth7) }
     }
 
-    var selectedItems: [CleanItem] { items.filter { selection.contains($0.id) } }
+    /// Mục sẽ dọn thật: mục chỉ chọn một phần được thay bằng đúng các đường dẫn con đã chọn.
+    var selectedItems: [CleanItem] {
+        items.filter { selection.contains($0.id) }.map { item in
+            guard let choice = partial[item.id] else { return item }
+            var part = item
+            part.action = .files(choice.paths.sorted())
+            part.size = choice.size
+            part.name = "\(item.name) · \(choice.paths.count) phần"
+            return part
+        }
+    }
+
+    func choose(_ item: CleanItem, parts: Set<String>?, size: Int64) {
+        guard item.risk != .keep else { return }
+        if let parts, parts.isEmpty {
+            selection.remove(item.id)
+            partial[item.id] = nil
+            return
+        }
+        selection.insert(item.id)
+        partial[item.id] = parts.map { PartialChoice(paths: $0, size: size) }
+    }
 
     func keepsBackup(_ item: CleanItem) -> Bool { item.undo == .backup && backupChoices.contains(item.id) }
 
@@ -81,6 +105,7 @@ final class AppState {
 
     func toggle(_ item: CleanItem) {
         guard item.risk != .keep else { return }
+        partial[item.id] = nil
         if selection.contains(item.id) { selection.remove(item.id) } else { selection.insert(item.id) }
     }
 
@@ -106,6 +131,7 @@ final class AppState {
         items = found
         let ids = Set(found.map(\.id))
         selection = selection.intersection(Set(found.filter { $0.risk != .keep }.map(\.id)))
+        partial = partial.filter { selection.contains($0.key) }
         backupChoices.formIntersection(ids)
         var room = backupBudget - archivesInUse - found.filter { backupChoices.contains($0.id) }.reduce(0) { $0 + $1.estimatedPackedSize }
         for item in found.filter({ $0.undo == .backup && !decidedBackups.contains($0.id) }).sorted(by: { $0.size < $1.size }) {
@@ -159,6 +185,7 @@ final class AppState {
         _ = Cleaner.purge(&history)
         HistoryStore.save(history)
         selection.removeAll()
+        partial.removeAll()
         isCleaning = false
         let failed = session.entries.filter { $0.outcome == .failed }
         let gained = SystemMetrics.diskFree() - before
@@ -248,4 +275,9 @@ final class AppState {
         series.append(value)
         if series.count > 60 { series.removeFirst(series.count - 60) }
     }
+}
+
+struct PartialChoice {
+    var paths: Set<String>
+    var size: Int64
 }

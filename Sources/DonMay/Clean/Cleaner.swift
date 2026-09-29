@@ -5,6 +5,7 @@ enum Cleaner {
     static func clean(_ items: [CleanItem], backups: Set<String>, progress: @escaping @Sendable (Double, String) -> Void) async -> HistorySession {
         let sessionID = UUID()
         var entries: [HistoryEntry] = []
+        let items = await Task.detached { expandBackups(items, backups: backups) }.value
         for (index, item) in items.enumerated() {
             progress(Double(index) / Double(items.count), item.name)
             let entry = await Task.detached(priority: .userInitiated) {
@@ -60,6 +61,20 @@ enum Cleaner {
             entry.archiveSize = nil
         }
         return entry
+    }
+
+    /// Mục sao lưu chọn nhiều phần con: mỗi phần một bản nén riêng để khôi phục từng phần.
+    private static func expandBackups(_ items: [CleanItem], backups: Set<String>) -> [CleanItem] {
+        items.flatMap { item -> [CleanItem] in
+            guard item.undo == .backup, backups.contains(item.id), item.paths.count > 1 else { return [item] }
+            return item.paths.map { path in
+                var part = item
+                part.action = .files([path])
+                part.size = FileSizer.measure(URL(fileURLWithPath: path)).size
+                part.name = "\(item.name.components(separatedBy: " · ").dropLast().joined(separator: " · ")) · \(URL(fileURLWithPath: path).lastPathComponent)"
+                return part
+            }
+        }
     }
 
     private static func ensureRoomForArchive(of item: CleanItem) throws {

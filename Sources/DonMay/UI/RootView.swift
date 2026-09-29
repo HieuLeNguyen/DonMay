@@ -49,6 +49,7 @@ struct RootView: View {
         .navigationSubtitle(state.lastScan.map { "Quét lúc \(Format.dateTime($0))" } ?? "")
         .sheet(isPresented: $state.confirming) { ConfirmSheet() }
         .sheet(item: $state.detailItem) { item in ItemDetailSheet(item: item) }
+        .sheet(isPresented: $state.showingMachineInfo) { MachineInfoSheet() }
         .confirmationDialog("Dọn Thùng rác?", isPresented: $state.confirmingTrash) {
             Button("Dọn Thùng rác", role: .destructive) { state.emptyTrash() }
         } message: {

@@ -90,6 +90,10 @@ Không cấp Full Disk Access thì mọi tính năng khác vẫn chạy; thẻ T
 
 **Bấm vào một mục** (ở danh sách hay ở khối *Chỗ đang phình to*) để mở màn chi tiết: vì sao mục được xếp mức đó, phần ghi mới 24 giờ / 7 ngày, dùng lần cuối, dọn thì mất gì, các đường dẫn kèm nút *Hiện trong Finder*, và **12 thành phần lớn nhất bên trong** (nhấp đúp để mở trong Finder). Tick ô bên trái để chọn dọn mà không mở chi tiết.
 
+**Chọn từng phần bên trong.** Màn chi tiết liệt kê mọi thứ nằm ngay bên trong mục (ví dụ từng ứng dụng trong *Bản cài lên iPhone thật*, từng dự án trong DerivedData), mỗi dòng một ô tick, kèm dung lượng và lần sửa cuối. *Chọn tất cả* / *Bỏ chọn tất cả* ở đầu danh sách; phần bỏ tick được giữ lại khi dọn. Nút cuối màn đổi theo lựa chọn: *Chọn dọn cả 19,4 GB*, *Chọn dọn 5 phần · 8,2 GB* hoặc *Không dọn mục này*. Mục chỉ dọn một phần hiện nhãn *Dọn N phần* trong danh sách. Mục có sao lưu nén thì mỗi phần được nén riêng để khôi phục từng phần.
+
+**Thông tin máy.** Bấm logo ở đầu thanh bên để xem: tên và mã máy, chip, RAM, phiên bản macOS, dung lượng ổ đĩa, lúc khởi động, thời gian chạy liên tục, lần tắt máy gần nhất, và trạng thái *Cập nhật macOS* — có bật tự tải / tự cài không, lần kiểm tra gần nhất, bản đang chờ cài, dung lượng bản cập nhật đã tải sẵn và bộ cài `Install macOS…` nếu có. Máy chạy quá 7 ngày chưa khởi động lại, hoặc macOS đang tự tải bản cập nhật, thì màn này cảnh báo.
+
 Khi quét, màn hình cho biết đang đo vị trí nào, đã xong bao nhiêu trên tổng số, và nhóm nào đã xong kèm dung lượng. Quét lại khi đã có kết quả thì chỉ hiện một dải mảnh ở đầu màn, danh sách cũ vẫn xem được.
 
 ## Cách dọn và khôi phục
@@ -142,6 +146,7 @@ Backups/<phiên>/    các tệp .aar đang giữ
 | **Zen** | Bộ nhớ đệm trang · dữ liệu trang web · lịch sử và dấu trang | An toàn · Cần cân nhắc (sao lưu nén) · Nên giữ |
 | **Desktop** | Ảnh chụp và bản ghi màn hình cũ hơn 30 ngày, tệp từ 200 MB | Cần cân nhắc |
 | **Downloads** | Bộ cài đã cài xong · bộ cài chưa thấy ứng dụng · bản tải trùng (SHA-256, giữ bản cũ nhất) · tệp cũ hơn 90 ngày | An toàn · Cần cân nhắc · An toàn · Cần cân nhắc |
+| **Cập nhật macOS** | Bộ cài `Install macOS….app` trong Applications · bản cập nhật đã tải sẵn (`/Library/Updates`, AssetsV2) | Cần cân nhắc · Nên giữ (thư mục hệ thống, cần quyền quản trị) |
 | **Documents** | `build`, `.build`, `node_modules`, `DerivedData`, `Pods`, `.dart_tool`, `.gradle` trong dự án | An toàn; *Cần cân nhắc* nếu dự án sửa trong 7 ngày; *Nên giữ* nếu git theo dõi |
 
 Mục nhỏ hơn 1 MB không hiện.

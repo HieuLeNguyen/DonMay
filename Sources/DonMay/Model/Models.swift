@@ -33,7 +33,7 @@ enum GrowthLevel: Int, Comparable {
 }
 
 enum AppGroup: String, CaseIterable, Identifiable {
-    case design, develop, browser, folders
+    case design, develop, browser, folders, system
 
     var id: String { rawValue }
 
@@ -43,12 +43,13 @@ enum AppGroup: String, CaseIterable, Identifiable {
         case .develop: "Công cụ develop"
         case .browser: "Trình duyệt"
         case .folders: "Thư mục"
+        case .system: "Hệ thống"
         }
     }
 }
 
 enum AppKind: String, CaseIterable, Codable, Identifiable {
-    case figma, pencil, xcode, claude, simulator, cli, zen, desktop, downloads, documents
+    case figma, pencil, xcode, claude, simulator, cli, zen, desktop, downloads, documents, macos
 
     var id: String { rawValue }
 
@@ -58,6 +59,7 @@ enum AppKind: String, CaseIterable, Codable, Identifiable {
         case .xcode, .claude, .simulator, .cli: .develop
         case .zen: .browser
         case .desktop, .downloads, .documents: .folders
+        case .macos: .system
         }
     }
 
@@ -73,6 +75,7 @@ enum AppKind: String, CaseIterable, Codable, Identifiable {
         case .desktop: "Desktop"
         case .downloads: "Downloads"
         case .documents: "Documents"
+        case .macos: "Cập nhật macOS"
         }
     }
 
@@ -88,6 +91,7 @@ enum AppKind: String, CaseIterable, Codable, Identifiable {
         case .desktop: "Ảnh chụp màn hình và tệp lớn trên Desktop"
         case .downloads: "Bộ cài, tệp tải trùng, tệp cũ"
         case .documents: "Thư mục build trong các dự án"
+        case .macos: "Bộ cài và bản cập nhật macOS đã tải về máy"
         }
     }
 
@@ -99,6 +103,7 @@ enum AppKind: String, CaseIterable, Codable, Identifiable {
         case .claude: "com.anthropic.claudefordesktop"
         case .simulator: "com.apple.iphonesimulator"
         case .zen: "app.zen-browser.zen"
+        case .macos: "com.apple.systempreferences"
         case .cli, .desktop, .downloads, .documents: nil
         }
     }

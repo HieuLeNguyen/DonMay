@@ -95,6 +95,9 @@ private struct ItemRow: View {
             .frame(width: 150, alignment: .leading)
             VStack(alignment: .leading, spacing: 5) {
                 RiskChip(risk: item.risk)
+                if let choice = state.partial[item.id] {
+                    Chip(text: "Dọn \(choice.paths.count) phần · \(Format.bytes(choice.size))", color: Palette.safe, systemImage: "checklist")
+                }
                 undo
             }
             .frame(width: 190, alignment: .leading)

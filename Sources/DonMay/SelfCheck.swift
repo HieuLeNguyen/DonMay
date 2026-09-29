@@ -60,6 +60,12 @@ enum SelfCheck {
         expect(!refused(home + "/Library/Developer/Xcode/DerivedData/Foo-abc"), "Cho phép DerivedData")
         expect(!refused(home + "/Documents/MyProjects/x/.build"), "Cho phép thư mục .build trong dự án")
         expect(!refused(home + "/Downloads/setup.dmg"), "Cho phép bộ cài ngay trong Downloads")
+        expect(!refused(home + "/Documents/MyProjects/x/node_modules/react"), "Cho phép một phần bên trong node_modules")
+        expect(refused(home + "/Documents/MyProjects/x/src"), "Từ chối thư mục mã nguồn trong Documents")
+        expect(!refused("/Applications/Install macOS Tahoe.app"), "Cho phép bộ cài macOS trong Applications")
+        expect(refused("/Applications/Xcode.app"), "Từ chối ứng dụng thường trong Applications")
+        expect(!refused(home + "/Library/Containers/com.apple.CoreDevice.CoreDeviceService/Data/Library/Caches/AppInstallationBinaryDeltas/com.x.app"),
+               "Cho phép một phần bên trong bản cài lên iPhone thật")
 
         let item = CleanItem(id: "t", app: .xcode, name: "t", reason: "", displayPath: "", size: 10 * .gb, lastUsed: nil,
                              risk: .safe, undo: .regenerate, growth24: 0, growth7: 5 * .gb, action: .files([]), regenerateHint: "")
