@@ -59,7 +59,7 @@ final class AppState {
         let dropped = Cleaner.purge(&history)
         if dropped > 0 {
             HistoryStore.save(history)
-            notice = "Đã xoá \(dropped) bản nén hết hạn hoặc vượt mức cho phép."
+            notice = L("Đã xoá \(dropped) bản nén hết hạn hoặc vượt mức cho phép.", "Deleted \(dropped) expired or over-limit archives.")
         }
         drainPurge()
     }
@@ -84,7 +84,7 @@ final class AppState {
             var part = item
             part.action = .files(choice.paths.sorted())
             part.size = choice.size
-            part.name = "\(item.name) · \(choice.paths.count) phần"
+            part.name = L("\(item.name) · \(choice.paths.count) phần", "\(item.name) · \(choice.paths.count) parts")
             return part
         }
     }
@@ -162,7 +162,7 @@ final class AppState {
         switch event {
         case let .finding(app):
             scanFinding = app
-            scanStep = "Đang tìm các vị trí của \(app.title)"
+            scanStep = L("Đang tìm các vị trí của \(app.title)", "Finding locations for \(app.title)")
         case let .planned(counts):
             scanFinding = nil
             scanPlanned = counts
@@ -199,8 +199,8 @@ final class AppState {
         partial.removeAll()
         isCleaning = false
         let failed = session.entries.filter { $0.outcome == .failed }
-        notice = "Đã dời \(session.entries.count - failed.count) mục ra khỏi chỗ cũ, đang giải phóng dung lượng ở nền."
-            + (failed.isEmpty ? "" : " \(failed.count) mục không dọn được, xem Lịch sử dọn.")
+        notice = L("Đã dời \(session.entries.count - failed.count) mục ra khỏi chỗ cũ, đang giải phóng dung lượng ở nền.", "Moved \(session.entries.count - failed.count) items out of place, freeing space in the background.")
+            + (failed.isEmpty ? "" : L(" \(failed.count) mục không dọn được, xem Lịch sử dọn.", " \(failed.count) items couldn't be cleaned, see Cleaning history."))
         route = .history
         drainPurge()
         await scan()
@@ -219,8 +219,8 @@ final class AppState {
             purgeTask = nil
             diskFree = SystemMetrics.diskFree()
             let gained = max(diskFree - before, 0)
-            notice = "Đã giải phóng \(Format.bytes(gained))."
-                + (failed > 0 ? " \(failed) mục chưa xoá được, sẽ thử lại lần mở sau." : "")
+            notice = L("Đã giải phóng \(Format.bytes(gained)).", "Freed \(Format.bytes(gained)).")
+                + (failed > 0 ? L(" \(failed) mục chưa xoá được, sẽ thử lại lần mở sau.", " \(failed) items couldn't be deleted yet, will retry next launch.") : "")
         }
     }
 
@@ -228,7 +228,7 @@ final class AppState {
         update(session, entry) { entry in
             do {
                 let restored = try Cleaner.restore(entry)
-                notice = "Đã khôi phục \(entry.name)."
+                notice = L("Đã khôi phục \(entry.name).", "Restored \(entry.name).")
                 return restored
             } catch {
                 notice = error.localizedDescription
@@ -270,7 +270,7 @@ final class AppState {
             try Cleaner.emptyTrash()
             trashSize = Cleaner.trashSize()
             diskFree = SystemMetrics.diskFree()
-            notice = "Đã dọn Thùng rác."
+            notice = L("Đã dọn Thùng rác.", "Emptied the Trash.")
         } catch {
             notice = error.localizedDescription
         }
@@ -282,7 +282,7 @@ final class AppState {
             (try? Safety.check(path)).flatMap { try? Cleaner.moveToPurge(URL(fileURLWithPath: path)) } == nil
         }
         trashSize = Cleaner.trashSize()
-        if !failed.isEmpty { notice = "\(failed.count) mục trong Thùng rác không xoá được." }
+        if !failed.isEmpty { notice = L("\(failed.count) mục trong Thùng rác không xoá được.", "\(failed.count) items in the Trash couldn't be deleted.") }
         drainPurge()
     }
 
@@ -322,10 +322,10 @@ enum ItemSort: String, CaseIterable {
 
     var title: String {
         switch self {
-        case .size: "Dung lượng lớn nhất"
-        case .growth: "Tăng nhanh nhất"
-        case .oldest: "Lâu chưa dùng nhất"
-        case .name: "Tên A–Z"
+        case .size: L("Dung lượng lớn nhất", "Largest first")
+        case .growth: L("Tăng nhanh nhất", "Fastest growing")
+        case .oldest: L("Lâu chưa dùng nhất", "Least recently used")
+        case .name: L("Tên A–Z", "Name A–Z")
         }
     }
 

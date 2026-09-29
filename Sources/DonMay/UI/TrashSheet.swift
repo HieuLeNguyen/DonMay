@@ -19,35 +19,35 @@ struct TrashSheet: View {
             HStack(spacing: 12) {
                 Image(nsImage: NSImage(named: NSImage.trashFullName) ?? NSImage()).resizable().frame(width: 44, height: 44)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Thùng rác").font(.title2.weight(.bold))
-                    Text(entries.map { "\($0.count) mục · \(Format.bytes(totalSize))" } ?? "Đang đo…").foregroundStyle(.secondary)
+                    Text(L("Thùng rác", "Trash")).font(.title2.weight(.bold))
+                    Text(entries.map { L("\($0.count) mục · \(Format.bytes(totalSize))", "\($0.count) items · \(Format.bytes(totalSize))") } ?? L("Đang đo…", "Measuring…")).foregroundStyle(.secondary)
                 }
                 Spacer()
-                Picker("Sắp xếp", selection: $sort) {
+                Picker(L("Sắp xếp", "Sort"), selection: $sort) {
                     ForEach(TrashSort.allCases, id: \.self) { Text($0.title).tag($0) }
                 }
                 .fixedSize()
             }
             if let entries, !entries.isEmpty {
                 HStack {
-                    Text("\(checked.count)/\(entries.count) mục · \(Format.bytes(checkedSize))").foregroundStyle(.secondary).monospacedDigit()
+                    Text(L("\(checked.count)/\(entries.count) mục · \(Format.bytes(checkedSize))", "\(checked.count)/\(entries.count) items · \(Format.bytes(checkedSize))")).foregroundStyle(.secondary).monospacedDigit()
                     Spacer()
-                    Button("Chọn tất cả") { checked = Set(entries.map(\.id)) }.disabled(checked.count == entries.count)
-                    Button("Bỏ chọn tất cả") { checked.removeAll() }.disabled(checked.isEmpty)
+                    Button(L("Chọn tất cả", "Select All")) { checked = Set(entries.map(\.id)) }.disabled(checked.count == entries.count)
+                    Button(L("Bỏ chọn tất cả", "Deselect All")) { checked.removeAll() }.disabled(checked.isEmpty)
                 }
             }
             list
-            Text("Nhấp đúp một dòng để mở trong Finder. Xoá ở đây là xoá hẳn, không hoàn tác được.")
+            Text(L("Nhấp đúp một dòng để mở trong Finder. Xoá ở đây là xoá hẳn, không hoàn tác được.", "Double-click a row to show it in Finder. Deleting here is permanent and can't be undone."))
                 .font(.caption).foregroundStyle(.secondary)
             HStack {
-                Button("Mở Thùng rác trong Finder") {
+                Button(L("Mở Thùng rác trong Finder", "Open Trash in Finder")) {
                     NSWorkspace.shared.open(FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".Trash"))
                 }
                 Spacer()
-                Button("Đóng") { dismiss() }.keyboardShortcut(.cancelAction)
-                Button("Dọn toàn bộ") { dismiss(); state.confirmingTrash = true }
+                Button(L("Đóng", "Close")) { dismiss() }.keyboardShortcut(.cancelAction)
+                Button(L("Dọn toàn bộ", "Empty All")) { dismiss(); state.confirmingTrash = true }
                     .disabled(entries?.isEmpty ?? true)
-                Button(checked.isEmpty ? "Xoá hẳn mục đã chọn" : "Xoá hẳn \(checked.count) mục · \(Format.bytes(checkedSize))") {
+                Button(checked.isEmpty ? L("Xoá hẳn mục đã chọn", "Delete Selected") : L("Xoá hẳn \(checked.count) mục · \(Format.bytes(checkedSize))", "Delete \(checked.count) items · \(Format.bytes(checkedSize))")) {
                     confirmingSelected = true
                 }
                 .buttonStyle(.borderedProminent).tint(Palette.alert)
@@ -57,13 +57,13 @@ struct TrashSheet: View {
         .padding(24)
         .frame(width: 720, height: 560, alignment: .top)
         .task { await load() }
-        .confirmationDialog("Xoá hẳn \(checked.count) mục?", isPresented: $confirmingSelected) {
-            Button("Xoá hẳn", role: .destructive) {
+        .confirmationDialog(L("Xoá hẳn \(checked.count) mục?", "Permanently delete \(checked.count) items?"), isPresented: $confirmingSelected) {
+            Button(L("Xoá hẳn", "Delete"), role: .destructive) {
                 state.removeFromTrash(Array(checked))
                 dismiss()
             }
         } message: {
-            Text("\(Format.bytes(checkedSize)) bị xoá hẳn, không hoàn tác được.")
+            Text(L("\(Format.bytes(checkedSize)) bị xoá hẳn, không hoàn tác được.", "\(Format.bytes(checkedSize)) will be permanently deleted. This can't be undone."))
         }
     }
 
@@ -71,7 +71,7 @@ struct TrashSheet: View {
     private var list: some View {
         if let entries {
             if entries.isEmpty {
-                Text("Thùng rác trống.").foregroundStyle(.secondary).frame(maxWidth: .infinity, maxHeight: .infinity)
+                Text(L("Thùng rác trống.", "The Trash is empty.")).foregroundStyle(.secondary).frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 let largest = Double(max(entries.map(\.size).max() ?? 1, 1))
                 ScrollView {
@@ -84,12 +84,12 @@ struct TrashSheet: View {
                 .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.03)))
             }
         } else if state.trashSize == nil {
-            Text("Cần quyền Full Disk Access để xem Thùng rác.").foregroundStyle(.secondary)
+            Text(L("Cần quyền Full Disk Access để xem Thùng rác.", "Full Disk Access is needed to view the Trash.")).foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             HStack(spacing: 8) {
                 ProgressView().controlSize(.small)
-                Text("Đang đo từng mục…").foregroundStyle(.secondary)
+                Text(L("Đang đo từng mục…", "Measuring each item…")).foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -106,7 +106,7 @@ struct TrashSheet: View {
             Text(entry.name).lineLimit(1).truncationMode(.middle).frame(width: 260, alignment: .leading)
             MeterBar(segments: [.init(value: Double(entry.size) / largest,
                                       color: (isOn ? Palette.alert : Color.secondary).opacity(0.7))], height: 6)
-            Text(entry.trashed.map { "bỏ \(Format.ago($0))" } ?? "").font(.caption).foregroundStyle(.secondary)
+            Text(entry.trashed.map { L("bỏ \(Format.ago($0))", "trashed \(Format.ago($0))") } ?? "").font(.caption).foregroundStyle(.secondary)
                 .frame(width: 100, alignment: .trailing)
             Text(Format.bytes(entry.size)).monospacedDigit().frame(width: 72, alignment: .trailing)
         }
@@ -145,10 +145,10 @@ enum TrashSort: CaseIterable {
 
     var title: String {
         switch self {
-        case .size: "Dung lượng lớn nhất"
-        case .newest: "Mới bỏ vào"
-        case .oldest: "Bỏ vào lâu nhất"
-        case .name: "Tên A–Z"
+        case .size: L("Dung lượng lớn nhất", "Largest first")
+        case .newest: L("Mới bỏ vào", "Recently trashed")
+        case .oldest: L("Bỏ vào lâu nhất", "Oldest trashed")
+        case .name: L("Tên A–Z", "Name A–Z")
         }
     }
 

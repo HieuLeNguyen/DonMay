@@ -21,7 +21,7 @@ enum Shell {
         process.waitUntilExit()
         guard process.terminationStatus == 0 else {
             let text = String(data: errorData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            throw Failure(message: text.isEmpty ? "\(arguments.joined(separator: " ")) thoát với mã \(process.terminationStatus)" : text)
+            throw Failure(message: text.isEmpty ? L("\(arguments.joined(separator: " ")) thoát với mã \(process.terminationStatus)", "\(arguments.joined(separator: " ")) exited with code \(process.terminationStatus)") : text)
         }
         return data
     }

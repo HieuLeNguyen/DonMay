@@ -8,20 +8,20 @@ struct ScanningView: View {
         VStack(spacing: 22) {
             ScanRadar(size: 120)
             VStack(spacing: 6) {
-                Text(state.scanPlannedTotal == 0 ? "Đang tìm các vị trí cần quét" : "Đang đo dung lượng")
+                Text(state.scanPlannedTotal == 0 ? L("Đang tìm các vị trí cần quét", "Finding locations to scan") : L("Đang đo dung lượng", "Measuring sizes"))
                     .font(.title2.weight(.semibold))
-                Text(state.scanStep.isEmpty ? "Chuẩn bị…" : state.scanStep)
+                Text(state.scanStep.isEmpty ? L("Chuẩn bị…", "Preparing…") : state.scanStep)
                     .foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                     .frame(maxWidth: 460)
             }
             VStack(spacing: 6) {
                 ProgressView(value: state.scanProgress).frame(width: 360)
                 if state.scanPlannedTotal > 0 {
-                    Text("\(state.scanDoneTotal) / \(state.scanPlannedTotal) vị trí").font(.caption).monospacedDigit().foregroundStyle(.secondary)
+                    Text(L("\(state.scanDoneTotal) / \(state.scanPlannedTotal) vị trí", "\(state.scanDoneTotal) / \(state.scanPlannedTotal) locations")).font(.caption).monospacedDigit().foregroundStyle(.secondary)
                 }
             }
             ScanGroupGrid()
-            Text("Nếu macOS hỏi quyền truy cập Desktop, Documents hoặc Downloads, hãy bấm Cho phép. Việc quét chờ tới khi Ngài trả lời.")
+            Text(L("Nếu macOS hỏi quyền truy cập Desktop, Documents hoặc Downloads, hãy bấm Cho phép. Việc quét chờ tới khi Ngài trả lời.", "If macOS asks for access to Desktop, Documents or Downloads, click Allow. Scanning waits until you respond."))
                 .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center).frame(maxWidth: 420)
         }
         .padding(32)
@@ -117,7 +117,7 @@ struct ScanBanner: View {
         HStack(spacing: 12) {
             ScanRadar(size: 26)
             VStack(alignment: .leading, spacing: 4) {
-                Text(state.scanStep.isEmpty ? "Đang quét lại…" : "Đang quét lại · \(state.scanStep)")
+                Text(state.scanStep.isEmpty ? L("Đang quét lại…", "Rescanning…") : L("Đang quét lại · \(state.scanStep)", "Rescanning · \(state.scanStep)"))
                     .lineLimit(1).truncationMode(.middle)
                 ProgressView(value: state.scanProgress).frame(maxWidth: 420)
             }

@@ -20,16 +20,16 @@ enum Archiver {
         guard let file = ArchiveByteStream.fileStream(path: FilePath(destination.path), mode: .writeOnly,
                                                       options: [.create, .truncate],
                                                       permissions: FilePermissions(rawValue: 0o600)) else {
-            throw Failure(message: "Không tạo được tệp nén")
+            throw Failure(message: L("Không tạo được tệp nén", "Couldn't create the archive"))
         }
         defer { try? file.close() }
         guard let compressor = ArchiveByteStream.compressionStream(using: .lzfse, writingTo: file) else {
-            throw Failure(message: "Không mở được luồng nén")
+            throw Failure(message: L("Không mở được luồng nén", "Couldn't open the compression stream"))
         }
         defer { try? compressor.close() }
         guard let encoder = ArchiveStream.encodeStream(writingTo: compressor),
               let keys = ArchiveHeader.FieldKeySet("TYP,PAT,LNK,DEV,DAT,UID,GID,MOD,FLG,MTM,BTM,CTM") else {
-            throw Failure(message: "Không mở được luồng lưu trữ")
+            throw Failure(message: L("Không mở được luồng lưu trữ", "Couldn't open the archive stream"))
         }
         defer { try? encoder.close() }
         try encoder.writeDirectoryContents(archiveFrom: FilePath(source.path), keySet: keys)
@@ -39,14 +39,14 @@ enum Archiver {
         try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
         guard let file = ArchiveByteStream.fileStream(path: FilePath(archive.path), mode: .readOnly, options: [],
                                                       permissions: FilePermissions(rawValue: 0o600)) else {
-            throw Failure(message: "Không mở được tệp nén")
+            throw Failure(message: L("Không mở được tệp nén", "Couldn't open the archive"))
         }
         defer { try? file.close() }
         guard let decompressor = ArchiveByteStream.decompressionStream(readingFrom: file),
               let decoder = ArchiveStream.decodeStream(readingFrom: decompressor),
               let extractor = ArchiveStream.extractStream(extractingTo: FilePath(destination.path),
                                                           flags: [.ignoreOperationNotPermitted]) else {
-            throw Failure(message: "Không mở được luồng giải nén")
+            throw Failure(message: L("Không mở được luồng giải nén", "Couldn't open the decompression stream"))
         }
         defer {
             try? extractor.close()

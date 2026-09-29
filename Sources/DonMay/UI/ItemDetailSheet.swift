@@ -56,10 +56,10 @@ struct ItemDetailSheet: View {
 
     private var facts: some View {
         Grid(alignment: .leading, horizontalSpacing: 24, verticalSpacing: 8) {
-            row("Vì sao", item.reason)
-            row("Ghi mới", "+\(Format.bytes(item.growth24)) trong 24 giờ · +\(Format.bytes(item.growth7)) trong 7 ngày")
-            row("Dùng lần cuối", item.lastUsed.map { "\(Format.dateTime($0)) (\(Format.ago($0)))" } ?? "Không rõ")
-            row("Khi dọn", undoText)
+            row(L("Vì sao", "Why"), item.reason)
+            row(L("Ghi mới", "Recently written"), L("+\(Format.bytes(item.growth24)) trong 24 giờ · +\(Format.bytes(item.growth7)) trong 7 ngày", "+\(Format.bytes(item.growth24)) in 24 hours · +\(Format.bytes(item.growth7)) in 7 days"))
+            row(L("Dùng lần cuối", "Last used"), item.lastUsed.map { "\(Format.dateTime($0)) (\(Format.ago($0)))" } ?? L("Không rõ", "Unknown"))
+            row(L("Khi dọn", "When cleaned"), undoText)
         }
     }
 
@@ -71,14 +71,14 @@ struct ItemDetailSheet: View {
     }
 
     private var undoText: String {
-        if item.risk == .keep { return "Công cụ không dọn mục này." }
+        if item.risk == .keep { return L("Công cụ không dọn mục này.", "Dọn Máy does not clean this item.") }
         switch item.undo {
-        case .regenerate: return "Xoá hẳn, không giữ bản sao. \(item.regenerateHint)."
-        case .irreversible: return "Xoá bằng xcrun simctl. Không hoàn tác được, phải gõ XOÁ để xác nhận."
+        case .regenerate: return L("Xoá hẳn, không giữ bản sao. \(item.regenerateHint).", "Deleted permanently, no copy kept. \(item.regenerateHint).")
+        case .irreversible: return L("Xoá bằng xcrun simctl. Không hoàn tác được, phải gõ XOÁ để xác nhận.", "Deleted with xcrun simctl. Cannot be undone; type DELETE to confirm.")
         case .backup:
             return state.backupChoices.contains(item.id)
-                ? "Nén thành ~\(Format.bytes(item.estimatedPackedSize)) rồi mới xoá. Khôi phục được trong \(BackupPolicy.keepDays) ngày."
-                : "Xoá không sao lưu (ô Sao lưu nén đang tắt)."
+                ? L("Nén thành ~\(Format.bytes(item.estimatedPackedSize)) rồi mới xoá. Khôi phục được trong \(BackupPolicy.keepDays) ngày.", "Compressed to ~\(Format.bytes(item.estimatedPackedSize)) before deleting. Restorable for \(BackupPolicy.keepDays) days.")
+                : L("Xoá không sao lưu (ô Sao lưu nén đang tắt).", "Deleted without backup (Compressed backup is off).")
         }
     }
 
@@ -88,30 +88,30 @@ struct ItemDetailSheet: View {
     private var breakdown: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
-                Text(canPick ? "Chọn phần muốn dọn" : "Chiếm nhiều nhất bên trong").font(.headline)
+                Text(canPick ? L("Chọn phần muốn dọn", "Choose parts to clean") : L("Chiếm nhiều nhất bên trong", "Largest contents")).font(.headline)
                 if let parts, canPick, !parts.isEmpty {
-                    Text("\(checked.count)/\(parts.count) phần · \(Format.bytes(checkedSize))")
+                    Text(L("\(checked.count)/\(parts.count) phần · \(Format.bytes(checkedSize))", "\(checked.count)/\(parts.count) parts · \(Format.bytes(checkedSize))"))
                         .foregroundStyle(.secondary).monospacedDigit()
                     Spacer()
-                    Button("Chọn tất cả") { checked = Set(parts.map(\.path)) }.disabled(checked.count == parts.count)
-                    Button("Bỏ chọn tất cả") { checked.removeAll() }.disabled(checked.isEmpty)
+                    Button(L("Chọn tất cả", "Select all")) { checked = Set(parts.map(\.path)) }.disabled(checked.count == parts.count)
+                    Button(L("Bỏ chọn tất cả", "Deselect all")) { checked.removeAll() }.disabled(checked.isEmpty)
                 }
             }
             if let parts {
                 if parts.isEmpty {
-                    Text(item.undo == .irreversible ? "Máy ảo và runtime được xoá nguyên cả khối." : "Không có thành phần con để liệt kê.")
+                    Text(item.undo == .irreversible ? L("Máy ảo và runtime được xoá nguyên cả khối.", "Simulators and runtimes are deleted as a whole.") : L("Không có thành phần con để liệt kê.", "Nothing inside to list."))
                         .foregroundStyle(.secondary)
                 } else {
                     partList(parts)
                     if canPick {
-                        Text("Phần bỏ tick được giữ lại khi dọn. Nhấp đúp một dòng để mở trong Finder.")
+                        Text(L("Phần bỏ tick được giữ lại khi dọn. Nhấp đúp một dòng để mở trong Finder.", "Unchecked parts are kept. Double-click a row to show it in Finder."))
                             .font(.caption).foregroundStyle(.secondary)
                     }
                 }
             } else {
                 HStack(spacing: 8) {
                     ProgressView().controlSize(.small)
-                    Text("Đang đo từng thành phần…").foregroundStyle(.secondary)
+                    Text(L("Đang đo từng thành phần…", "Measuring contents…")).foregroundStyle(.secondary)
                 }
             }
         }
@@ -156,10 +156,10 @@ struct ItemDetailSheet: View {
     private var footer: some View {
         HStack {
             if item.paths.count == 1 {
-                Button("Hiện trong Finder") { NSWorkspace.shared.selectFile(item.paths[0], inFileViewerRootedAtPath: "") }
+                Button(L("Hiện trong Finder", "Show in Finder")) { NSWorkspace.shared.selectFile(item.paths[0], inFileViewerRootedAtPath: "") }
             }
             Spacer()
-            Button("Đóng") { dismiss() }.keyboardShortcut(.cancelAction)
+            Button(L("Đóng", "Close")) { dismiss() }.keyboardShortcut(.cancelAction)
             if item.risk != .keep {
                 primaryButton
             }
@@ -170,9 +170,9 @@ struct ItemDetailSheet: View {
     private var primaryButton: some View {
         let total = parts?.count ?? 0
         if canPick && total > 0 {
-            let title = checked.isEmpty ? "Không dọn mục này"
-                : checked.count == total ? "Chọn dọn cả \(Format.bytes(item.size))"
-                : "Chọn dọn \(checked.count) phần · \(Format.bytes(checkedSize))"
+            let title = checked.isEmpty ? L("Không dọn mục này", "Don't clean this item")
+                : checked.count == total ? L("Chọn dọn cả \(Format.bytes(item.size))", "Clean all \(Format.bytes(item.size))")
+                : L("Chọn dọn \(checked.count) phần · \(Format.bytes(checkedSize))", "Clean \(checked.count) parts · \(Format.bytes(checkedSize))")
             Button(title) {
                 state.choose(item, parts: checked.count == total ? nil : checked, size: checkedSize)
                 dismiss()
@@ -181,7 +181,7 @@ struct ItemDetailSheet: View {
             .keyboardShortcut(.defaultAction)
         } else {
             let selected = state.selection.contains(item.id)
-            Button(selected ? "Bỏ chọn" : "Chọn để dọn") { state.toggle(item); dismiss() }
+            Button(selected ? L("Bỏ chọn", "Deselect") : L("Chọn để dọn", "Select to clean")) { state.toggle(item); dismiss() }
                 .buttonStyle(.borderedProminent).tint(selected ? .secondary : Palette.accent)
                 .keyboardShortcut(.defaultAction)
         }

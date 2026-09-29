@@ -43,28 +43,28 @@ enum Safety {
         let resolved = url.deletingLastPathComponent().resolvingSymlinksInPath().appendingPathComponent(url.lastPathComponent).path
         if allowedFiles.contains(resolved) { return }
         guard let root = allowedRoots.first(where: { resolved.hasPrefix($0 + "/") }) else {
-            throw Refusal(path: path, reason: "nằm ngoài các vị trí được phép dọn")
+            throw Refusal(path: path, reason: L("nằm ngoài các vị trí được phép dọn", "it is outside the locations allowed for cleaning"))
         }
         if resolved.contains("/.git/") || resolved.hasSuffix("/.git") {
-            throw Refusal(path: path, reason: "là kho git")
+            throw Refusal(path: path, reason: L("là kho git", "it is a git repository"))
         }
         if root.hasSuffix("/Documents") {
             let inside = resolved.dropFirst(root.count + 1).split(separator: "/").map(String.init)
             guard inside.contains(where: buildFolders.contains) else {
-                throw Refusal(path: path, reason: "trong Documents chỉ được xoá thư mục build hoặc thứ nằm trong nó")
+                throw Refusal(path: path, reason: L("trong Documents chỉ được xoá thư mục build hoặc thứ nằm trong nó", "in Documents only build folders or their contents can be deleted"))
             }
         }
         if brewRoots.contains(root) && resolved.dropFirst(root.count + 1).split(separator: "/").count < 2 {
-            throw Refusal(path: path, reason: "chỉ được xoá một phiên bản cũ của gói, không xoá cả gói")
+            throw Refusal(path: path, reason: L("chỉ được xoá một phiên bản cũ của gói, không xoá cả gói", "only an old version of a package can be deleted, not the whole package"))
         }
         if (root.hasSuffix("/Desktop") || root.hasSuffix("/Downloads")) && url.deletingLastPathComponent().path != root {
-            throw Refusal(path: path, reason: "chỉ được xoá tệp nằm ngay trong Desktop hoặc Downloads")
+            throw Refusal(path: path, reason: L("chỉ được xoá tệp nằm ngay trong Desktop hoặc Downloads", "only files directly inside Desktop or Downloads can be deleted"))
         }
     }
 
     struct Refusal: LocalizedError {
         let path: String
         let reason: String
-        var errorDescription: String? { "Từ chối xoá \(Format.abbreviatingHome(path)): \(reason)" }
+        var errorDescription: String? { L("Từ chối xoá \(Format.abbreviatingHome(path)): \(reason)", "Refused to delete \(Format.abbreviatingHome(path)): \(reason)") }
     }
 }

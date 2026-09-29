@@ -35,7 +35,7 @@ struct Candidate {
 
     var displayPath: String {
         urls.count == 1 ? Format.abbreviatingHome(urls[0].path)
-            : Format.abbreviatingHome(urls[0].deletingLastPathComponent().path) + " · \(urls.count) mục"
+            : Format.abbreviatingHome(urls[0].deletingLastPathComponent().path) + L(" · \(urls.count) mục", " · \(urls.count) items")
     }
 }
 

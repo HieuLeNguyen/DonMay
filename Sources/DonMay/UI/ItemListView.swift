@@ -26,29 +26,29 @@ struct ItemListView: View {
                     LegendDot(color: Palette.color(risk), text: "\(risk.title) \(Format.bytes(state.size(all.filter { $0.risk == risk })))")
                 }
                 if AppIcons.isRunning(app) && app.shouldQuitBeforeCleaning {
-                    Chip(text: "\(app.title) đang mở · nên thoát trước khi dọn", color: Palette.warn, systemImage: "exclamationmark.triangle.fill")
+                    Chip(text: L("\(app.title) đang mở · nên thoát trước khi dọn", "\(app.title) is open · quit it before cleaning"), color: Palette.warn, systemImage: "exclamationmark.triangle.fill")
                 }
             }
             HStack(spacing: 10) {
-                Picker("Lọc", selection: $state.filter) {
-                    Text("Tất cả").tag(Risk?.none)
+                Picker(L("Lọc", "Filter"), selection: $state.filter) {
+                    Text(L("Tất cả", "All")).tag(Risk?.none)
                     ForEach(Risk.allCases, id: \.self) { Text($0.title).tag(Risk?.some($0)) }
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 .frame(maxWidth: 380)
-                Picker("Sắp xếp", selection: $state.sort) {
+                Picker(L("Sắp xếp", "Sort"), selection: $state.sort) {
                     ForEach(ItemSort.allCases, id: \.self) { Text($0.title).tag($0) }
                 }
                 .fixedSize()
-                TextField("Tìm mục", text: $state.query).textFieldStyle(.roundedBorder).frame(maxWidth: 220)
+                TextField(L("Tìm mục", "Search items"), text: $state.query).textFieldStyle(.roundedBorder).frame(maxWidth: 220)
                 Spacer()
-                Button("Chọn mục an toàn") { state.selectSafe(in: app) }
-                Button("Bỏ chọn trong mục này") { state.deselect(in: app) }
+                Button(L("Chọn mục an toàn", "Select Safe Items")) { state.selectSafe(in: app) }
+                Button(L("Bỏ chọn trong mục này", "Deselect All Here")) { state.deselect(in: app) }
                     .disabled(!all.contains { state.selection.contains($0.id) })
             }
             if rows.isEmpty {
-                Text(all.isEmpty ? "Không có gì để dọn ở đây." : "Không có mục nào khớp bộ lọc.")
+                Text(all.isEmpty ? L("Không có gì để dọn ở đây.", "Nothing to clean here.") : L("Không có mục nào khớp bộ lọc.", "No items match the filter."))
                     .foregroundStyle(.secondary).rowSurface()
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             } else {
@@ -81,20 +81,20 @@ private struct ItemRow: View {
             }
             .contextMenu {
                 if case let .files(paths) = item.action, let first = paths.first {
-                    Button("Hiện trong Finder") { NSWorkspace.shared.selectFile(first, inFileViewerRootedAtPath: "") }
+                    Button(L("Hiện trong Finder", "Show in Finder")) { NSWorkspace.shared.selectFile(first, inFileViewerRootedAtPath: "") }
                 }
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 1) {
                 Text(Format.bytes(item.size)).font(.title3.weight(.semibold)).monospacedDigit()
-                Text("dùng \(Format.ago(item.lastUsed))").font(.caption).foregroundStyle(.secondary)
+                Text(L("dùng \(Format.ago(item.lastUsed))", "used \(Format.ago(item.lastUsed))")).font(.caption).foregroundStyle(.secondary)
             }
             .frame(width: 110, alignment: .trailing)
             Group {
                 if item.level == .flat {
-                    Chip(text: "Ổn định", color: .secondary)
+                    Chip(text: L("Ổn định", "Stable"), color: .secondary)
                 } else {
-                    Chip(text: "+\(Format.bytes(item.growth7)) / 7 ngày", color: Palette.color(item.level),
+                    Chip(text: L("+\(Format.bytes(item.growth7)) / 7 ngày", "+\(Format.bytes(item.growth7)) / 7 days"), color: Palette.color(item.level),
                          systemImage: item.level.symbol)
                 }
             }
@@ -102,7 +102,7 @@ private struct ItemRow: View {
             VStack(alignment: .leading, spacing: 5) {
                 RiskChip(risk: item.risk)
                 if let choice = state.partial[item.id] {
-                    Chip(text: "Dọn \(choice.paths.count) phần · \(Format.bytes(choice.size))", color: Palette.safe, systemImage: "checklist")
+                    Chip(text: L("Dọn \(choice.paths.count) phần · \(Format.bytes(choice.size))", "Clean \(choice.paths.count) parts · \(Format.bytes(choice.size))"), color: Palette.safe, systemImage: "checklist")
                 }
                 undo
             }
@@ -112,29 +112,29 @@ private struct ItemRow: View {
         .rowSurface()
         .contentShape(Rectangle())
         .onTapGesture { state.detailItem = item }
-        .help("Bấm để xem chi tiết. Tick ô bên trái để chọn dọn.")
+        .help(L("Bấm để xem chi tiết. Tick ô bên trái để chọn dọn.", "Click for details. Tick the box on the left to select for cleaning."))
     }
 
     @ViewBuilder
     private var undo: some View {
         if item.risk == .keep {
-            Text("Không dọn").font(.caption).foregroundStyle(.secondary)
+            Text(L("Không dọn", "Not cleaned")).font(.caption).foregroundStyle(.secondary)
         } else {
             switch item.undo {
             case .regenerate:
-                Text("Xoá hẳn · tự tạo lại").font(.caption).foregroundStyle(.secondary)
+                Text(L("Xoá hẳn · tự tạo lại", "Deleted · regenerates")).font(.caption).foregroundStyle(.secondary)
             case .irreversible:
-                Text("Không hoàn tác được").font(.caption).foregroundStyle(Palette.alert)
+                Text(L("Không hoàn tác được", "Can't be undone")).font(.caption).foregroundStyle(Palette.alert)
             case .backup:
                 Toggle(isOn: Binding(get: { state.backupChoices.contains(item.id) },
                                      set: { keep in
                                          if keep { state.backupChoices.insert(item.id) } else { state.backupChoices.remove(item.id) }
                                      })) {
-                    Text("Sao lưu nén (~\(Format.bytes(item.estimatedPackedSize)))").font(.caption)
+                    Text(L("Sao lưu nén (~\(Format.bytes(item.estimatedPackedSize)))", "Compressed backup (~\(Format.bytes(item.estimatedPackedSize)))")).font(.caption)
                 }
                 .toggleStyle(.checkbox)
                 if item.estimatedPackedSize > state.backupBudget - state.archivesInUse {
-                    Text("Vượt mức sao lưu cho phép").font(.caption).foregroundStyle(Palette.alert)
+                    Text(L("Vượt mức sao lưu cho phép", "Exceeds backup allowance")).font(.caption).foregroundStyle(Palette.alert)
                 }
             }
         }

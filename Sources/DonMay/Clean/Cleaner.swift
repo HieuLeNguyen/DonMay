@@ -35,21 +35,21 @@ enum Cleaner {
                 try paths.forEach(Safety.check)
                 if item.undo == .backup && backup {
                     try ensureRoomForArchive(of: item)
-                    guard paths.count == 1 else { throw Archiver.Failure(message: "Chỉ sao lưu được một thư mục mỗi mục") }
+                    guard paths.count == 1 else { throw Archiver.Failure(message: L("Chỉ sao lưu được một thư mục mỗi mục", "Only one folder per item can be backed up")) }
                     entry.archiveSize = try Archiver.archive(directory: URL(fileURLWithPath: paths[0]), to: archive)
                     entry.archivePath = archive.path
                     entry.expiresAt = Calendar.current.date(byAdding: .day, value: BackupPolicy.keepDays, to: Date())
                     entry.outcome = .packed
                 } else if item.undo == .backup {
                     entry.outcome = .irreversible
-                    entry.regenerateHint = "Đã xoá không sao lưu"
+                    entry.regenerateHint = L("Đã xoá không sao lưu", "Deleted without backup")
                 }
                 do {
                     for path in paths where FileManager.default.fileExists(atPath: path) {
                         try moveToPurge(URL(fileURLWithPath: path))
                     }
                 } catch where entry.outcome == .packed {
-                    entry.error = "Đã nén xong nhưng xoá bản gốc chưa hết: \(error.localizedDescription). Bản nén được giữ lại."
+                    entry.error = L("Đã nén xong nhưng xoá bản gốc chưa hết: \(error.localizedDescription). Bản nén được giữ lại.", "Archived, but the original wasn't fully deleted: \(error.localizedDescription). The archive was kept.")
                     return entry
                 }
             }
@@ -105,7 +105,7 @@ enum Cleaner {
             do {
                 try fm.removeItem(at: url)
             } catch {
-                throw Archiver.Failure(message: "Không có quyền xoá một số tệp trong \(url.lastPathComponent). Thoát ứng dụng đang dùng nó (ví dụ Xcode) rồi thử lại.")
+                throw Archiver.Failure(message: L("Không có quyền xoá một số tệp trong \(url.lastPathComponent). Thoát ứng dụng đang dùng nó (ví dụ Xcode) rồi thử lại.", "No permission to delete some files in \(url.lastPathComponent). Quit the application using it (for example Xcode) and try again."))
             }
         }
     }
@@ -130,7 +130,7 @@ enum Cleaner {
     private static func ensureRoomForArchive(of item: CleanItem) throws {
         let free = SystemMetrics.diskFree()
         guard free > item.estimatedPackedSize + 512 * .mb else {
-            throw Archiver.Failure(message: "Không đủ chỗ trống để nén \(Format.bytes(item.estimatedPackedSize))")
+            throw Archiver.Failure(message: L("Không đủ chỗ trống để nén \(Format.bytes(item.estimatedPackedSize))", "Not enough free space to archive \(Format.bytes(item.estimatedPackedSize))"))
         }
     }
 
@@ -146,12 +146,12 @@ enum Cleaner {
 
     static func restore(_ entry: HistoryEntry) throws -> HistoryEntry {
         guard entry.outcome == .packed, let archivePath = entry.archivePath, let original = entry.paths.first else {
-            throw Archiver.Failure(message: "Mục này không có bản nén")
+            throw Archiver.Failure(message: L("Mục này không có bản nén", "This item has no archive"))
         }
         var destination = URL(fileURLWithPath: original)
         if FileManager.default.fileExists(atPath: destination.path) {
             destination = destination.deletingLastPathComponent()
-                .appendingPathComponent(destination.lastPathComponent + " (khôi phục)")
+                .appendingPathComponent(destination.lastPathComponent + L(" (khôi phục)", " (restored)"))
         }
         try Archiver.extract(URL(fileURLWithPath: archivePath), into: destination)
         try? FileManager.default.removeItem(atPath: archivePath)
@@ -204,7 +204,7 @@ enum Cleaner {
     static func emptyTrash() throws {
         var error: NSDictionary?
         NSAppleScript(source: "tell application \"Finder\" to empty trash")?.executeAndReturnError(&error)
-        if let error { throw Archiver.Failure(message: error[NSAppleScript.errorMessage] as? String ?? "Không dọn được Thùng rác") }
+        if let error { throw Archiver.Failure(message: error[NSAppleScript.errorMessage] as? String ?? L("Không dọn được Thùng rác", "Couldn't empty the Trash")) }
     }
 }
 

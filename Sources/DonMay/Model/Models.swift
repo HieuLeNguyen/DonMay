@@ -5,9 +5,9 @@ enum Risk: String, Codable, CaseIterable {
 
     var title: String {
         switch self {
-        case .safe: "An toàn"
-        case .warn: "Cần cân nhắc"
-        case .keep: "Nên giữ"
+        case .safe: L("An toàn", "Safe")
+        case .warn: L("Cần cân nhắc", "Review")
+        case .keep: L("Nên giữ", "Keep")
         }
     }
 }
@@ -25,9 +25,9 @@ enum GrowthLevel: Int, Comparable {
 
     var title: String {
         switch self {
-        case .spike: "Tăng bất thường"
-        case .up: "Đang tăng"
-        case .flat: "Ổn định"
+        case .spike: L("Tăng bất thường", "Unusual growth")
+        case .up: L("Đang tăng", "Growing")
+        case .flat: L("Ổn định", "Stable")
         }
     }
 }
@@ -39,11 +39,11 @@ enum AppGroup: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .design: "Công cụ thiết kế"
-        case .develop: "Công cụ develop"
-        case .browser: "Trình duyệt"
-        case .folders: "Thư mục"
-        case .system: "Hệ thống"
+        case .design: L("Công cụ thiết kế", "Design tools")
+        case .develop: L("Công cụ develop", "Developer tools")
+        case .browser: L("Trình duyệt", "Browsers")
+        case .folders: L("Thư mục", "Folders")
+        case .system: L("Hệ thống", "System")
         }
     }
 }
@@ -71,35 +71,35 @@ enum AppKind: String, CaseIterable, Codable, Identifiable {
         case .claude: "Claude CLI"
         case .codex: "Codex"
         case .homebrew: "Homebrew"
-        case .notes: "Ghi chú"
-        case .updates: "Bản cập nhật ứng dụng"
+        case .notes: L("Ghi chú", "Notes")
+        case .updates: L("Bản cập nhật ứng dụng", "App updates")
         case .simulator: "Simulator"
-        case .cli: "npm & CLI khác"
+        case .cli: L("npm & CLI khác", "npm & other CLIs")
         case .zen: "Zen"
         case .desktop: "Desktop"
         case .downloads: "Downloads"
         case .documents: "Documents"
-        case .macos: "Cập nhật macOS"
+        case .macos: L("Cập nhật macOS", "macOS updates")
         }
     }
 
     var detail: String {
         switch self {
-        case .figma: "Bộ nhớ đệm file thiết kế và mã"
-        case .pencil: "Bộ nhớ đệm, phiên Claude và bản sao lưu của Pencil"
-        case .xcode: "Dữ liệu build, hỗ trợ máy thật, gói Swift"
-        case .claude: "Job nền, hội thoại từng dự án, máy ảo của Claude Desktop"
-        case .codex: "Phiên hội thoại, nhật ký và runtime của Codex"
-        case .homebrew: "Bộ nhớ đệm tải về và phiên bản gói cũ"
-        case .notes: "Dữ liệu và tệp đính kèm của Ghi chú"
-        case .updates: "Bản cập nhật các ứng dụng đã tải sẵn về máy"
-        case .simulator: "Máy ảo và runtime iOS"
+        case .figma: L("Bộ nhớ đệm file thiết kế và mã", "Design file and code caches")
+        case .pencil: L("Bộ nhớ đệm, phiên Claude và bản sao lưu của Pencil", "Pencil caches, Claude sessions and backups")
+        case .xcode: L("Dữ liệu build, hỗ trợ máy thật, gói Swift", "Build data, device support, Swift packages")
+        case .claude: L("Job nền, hội thoại từng dự án, máy ảo của Claude Desktop", "Background jobs, per-project conversations, Claude Desktop VM")
+        case .codex: L("Phiên hội thoại, nhật ký và runtime của Codex", "Codex sessions, logs and runtimes")
+        case .homebrew: L("Bộ nhớ đệm tải về và phiên bản gói cũ", "Download cache and old package versions")
+        case .notes: L("Dữ liệu và tệp đính kèm của Ghi chú", "Notes data and attachments")
+        case .updates: L("Bản cập nhật các ứng dụng đã tải sẵn về máy", "App updates already downloaded to this Mac")
+        case .simulator: L("Máy ảo và runtime iOS", "iOS simulators and runtimes")
         case .cli: "npm, CocoaPods, Firebase CLI, Gradle"
-        case .zen: "Bộ nhớ đệm và dữ liệu trang web"
-        case .desktop: "Ảnh chụp màn hình và tệp lớn trên Desktop"
-        case .downloads: "Bộ cài, tệp tải trùng, tệp cũ"
-        case .documents: "Thư mục build trong các dự án"
-        case .macos: "Bộ cài và bản cập nhật macOS đã tải về máy"
+        case .zen: L("Bộ nhớ đệm và dữ liệu trang web", "Cache and website data")
+        case .desktop: L("Ảnh chụp màn hình và tệp lớn trên Desktop", "Screenshots and large files on the Desktop")
+        case .downloads: L("Bộ cài, tệp tải trùng, tệp cũ", "Installers, duplicate downloads, old files")
+        case .documents: L("Thư mục build trong các dự án", "Build folders inside projects")
+        case .macos: L("Bộ cài và bản cập nhật macOS đã tải về máy", "Downloaded macOS installers and updates")
         }
     }
 

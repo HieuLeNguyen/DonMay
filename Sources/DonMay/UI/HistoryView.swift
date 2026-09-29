@@ -6,23 +6,23 @@ struct HistoryView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Lịch sử dọn").font(.largeTitle.weight(.bold))
-                Text("Công cụ không dùng Thùng rác, vì tệp trong Thùng rác vẫn chiếm nguyên dung lượng. Mỗi mục được xử lý theo một trong ba cách.")
+                Text(L("Lịch sử dọn", "Cleaning history")).font(.largeTitle.weight(.bold))
+                Text(L("Công cụ không dùng Thùng rác, vì tệp trong Thùng rác vẫn chiếm nguyên dung lượng. Mỗi mục được xử lý theo một trong ba cách.", "Dọn Máy skips the Trash, because files in the Trash still take up space. Each item is handled in one of three ways."))
                     .foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             Grid(horizontalSpacing: 12) {
                 GridRow {
-                    rule(Chip(text: "Xoá hẳn", color: .secondary), "Mục tự tạo lại",
-                         "Bộ nhớ đệm, dữ liệu build, gói tải về. Không giữ bản sao. Lịch sử ghi lại cách tạo lại.")
-                    rule(Chip(text: "Sao lưu nén", color: Palette.safe), "Chỉ khi thật cần",
-                         "Dữ liệu không tự tạo lại được. Nén LZFSE xong mới xoá bản gốc, giữ \(BackupPolicy.keepDays) ngày.")
-                    rule(Chip(text: "Không hoàn tác", color: Palette.alert), "Hỏi trước khi xoá",
-                         "Máy ảo và runtime xoá bằng simctl. Phải gõ xác nhận.")
+                    rule(Chip(text: L("Xoá hẳn", "Deleted"), color: .secondary), L("Mục tự tạo lại", "Regenerated items"),
+                         L("Bộ nhớ đệm, dữ liệu build, gói tải về. Không giữ bản sao. Lịch sử ghi lại cách tạo lại.", "Caches, build data, downloaded packages. No copy is kept; history notes how to regenerate them."))
+                    rule(Chip(text: L("Sao lưu nén", "Compressed backup"), color: Palette.safe), L("Chỉ khi thật cần", "Only when needed"),
+                         L("Dữ liệu không tự tạo lại được. Nén LZFSE xong mới xoá bản gốc, giữ \(BackupPolicy.keepDays) ngày.", "Data that can't be regenerated. Compressed with LZFSE before deleting the original, kept \(BackupPolicy.keepDays) days."))
+                    rule(Chip(text: L("Không hoàn tác", "Irreversible"), color: Palette.alert), L("Hỏi trước khi xoá", "Asks before deleting"),
+                         L("Máy ảo và runtime xoá bằng simctl. Phải gõ xác nhận.", "Simulators and runtimes are deleted with simctl. Requires typed confirmation."))
                 }
             }
             budget
             if state.history.isEmpty {
-                Text("Chưa dọn lần nào.").foregroundStyle(.secondary)
+                Text(L("Chưa dọn lần nào.", "Nothing cleaned yet.")).foregroundStyle(.secondary)
             }
             ForEach(state.history) { session in
                 SessionCard(session: session)
@@ -45,14 +45,14 @@ struct HistoryView: View {
         Card {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
-                    Text("Bản nén đang giữ").fontWeight(.semibold)
+                    Text(L("Bản nén đang giữ", "Kept backups")).fontWeight(.semibold)
                     Spacer()
-                    Text("\(Format.bytes(state.archivesInUse)) / \(Format.bytes(state.backupBudget)) cho phép").monospacedDigit()
+                    Text(L("\(Format.bytes(state.archivesInUse)) / \(Format.bytes(state.backupBudget)) cho phép", "\(Format.bytes(state.archivesInUse)) of \(Format.bytes(state.backupBudget)) allowed")).monospacedDigit()
                 }
                 MeterBar(segments: [.init(value: Double(state.archivesInUse) / Double(max(state.backupBudget, 1)), color: Palette.accent)], height: 8)
-                Text("Mức cho phép là 10% dung lượng trống, tối đa 2 GB. Khi ổ còn dưới \(Format.bytes(BackupPolicy.lowDiskFree)), bản nén cũ hơn \(BackupPolicy.graceHours) giờ bị xoá trước, bản cũ nhất đi trước.")
+                Text(L("Mức cho phép là 10% dung lượng trống, tối đa 2 GB. Khi ổ còn dưới \(Format.bytes(BackupPolicy.lowDiskFree)), bản nén cũ hơn \(BackupPolicy.graceHours) giờ bị xoá trước, bản cũ nhất đi trước.", "The limit is 10% of free space, up to 2 GB. When free space drops below \(Format.bytes(BackupPolicy.lowDiskFree)), backups older than \(BackupPolicy.graceHours) hours are removed, oldest first."))
                     .font(.callout).foregroundStyle(.secondary)
-                Button("Xoá mọi bản nén · lấy lại \(Format.bytes(state.archivesInUse))") { state.dropAllArchives() }
+                Button(L("Xoá mọi bản nén · lấy lại \(Format.bytes(state.archivesInUse))", "Delete all backups · free \(Format.bytes(state.archivesInUse))")) { state.dropAllArchives() }
                     .disabled(state.archivesInUse == 0)
             }
         }
@@ -67,11 +67,11 @@ private struct SessionCard: View {
         VStack(spacing: 0) {
             HStack(spacing: 14) {
                 Text(Format.dateTime(session.date)).fontWeight(.semibold)
-                Text("Đã lấy lại \(Format.bytes(session.freed))" + (session.keptArchiveSize > 0 ? " · giữ bản nén \(Format.bytes(session.keptArchiveSize))" : ""))
+                Text(L("Đã lấy lại \(Format.bytes(session.freed))", "Freed \(Format.bytes(session.freed))") + (session.keptArchiveSize > 0 ? L(" · giữ bản nén \(Format.bytes(session.keptArchiveSize))", " · kept backup \(Format.bytes(session.keptArchiveSize))") : ""))
                     .foregroundStyle(.secondary)
                 Spacer()
                 if session.keptArchiveSize > 0 {
-                    Button("Khôi phục lần này") { state.restoreAll(in: session.id) }
+                    Button(L("Khôi phục lần này", "Restore this session")) { state.restoreAll(in: session.id) }
                 }
             }
             .padding(.horizontal, 16).padding(.vertical, 10)
@@ -92,14 +92,14 @@ private struct SessionCard: View {
                     VStack(alignment: .trailing, spacing: 1) {
                         Text(Format.bytes(entry.size)).monospacedDigit()
                         if let archive = entry.archiveSize, entry.outcome == .packed {
-                            Text("nén còn \(Format.bytes(archive))").font(.caption).foregroundStyle(.secondary)
+                            Text(L("nén còn \(Format.bytes(archive))", "backup \(Format.bytes(archive))")).font(.caption).foregroundStyle(.secondary)
                         }
                     }
                     .frame(width: 110, alignment: .trailing)
                     outcome(entry).frame(width: 190, alignment: .trailing)
                     if entry.outcome == .packed {
-                        Button("Khôi phục") { state.restore(session: session.id, entry: entry.id) }
-                        Button("Xoá bản nén") { state.dropArchive(session: session.id, entry: entry.id) }
+                        Button(L("Khôi phục", "Restore")) { state.restore(session: session.id, entry: entry.id) }
+                        Button(L("Xoá bản nén", "Delete backup")) { state.dropArchive(session: session.id, entry: entry.id) }
                             .buttonStyle(.borderless).foregroundStyle(.secondary)
                     }
                 }
@@ -113,13 +113,13 @@ private struct SessionCard: View {
 
     private func outcome(_ entry: HistoryEntry) -> Chip {
         switch entry.outcome {
-        case .regenerated: Chip(text: "Đã xoá · tự tạo lại", color: .secondary)
-        case .irreversible: Chip(text: "Đã xoá · không hoàn tác", color: .secondary)
+        case .regenerated: Chip(text: L("Đã xoá · tự tạo lại", "Deleted · regenerates"), color: .secondary)
+        case .irreversible: Chip(text: L("Đã xoá · không hoàn tác", "Deleted · irreversible"), color: .secondary)
         case .packed:
-            Chip(text: "Bản nén · còn \(daysLeft(entry.expiresAt)) ngày", color: Palette.safe)
-        case .restored: Chip(text: "Đã khôi phục", color: .secondary)
-        case .expired: Chip(text: "Bản nén đã xoá", color: .secondary)
-        case .failed: Chip(text: "Không dọn được", color: Palette.alert)
+            Chip(text: L("Bản nén · còn \(daysLeft(entry.expiresAt)) ngày", "Backup · \(daysLeft(entry.expiresAt)) days left"), color: Palette.safe)
+        case .restored: Chip(text: L("Đã khôi phục", "Restored"), color: .secondary)
+        case .expired: Chip(text: L("Bản nén đã xoá", "Backup deleted"), color: .secondary)
+        case .failed: Chip(text: L("Không dọn được", "Failed"), color: Palette.alert)
         }
     }
 

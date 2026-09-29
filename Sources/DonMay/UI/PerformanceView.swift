@@ -7,28 +7,28 @@ struct PerformanceView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Hiệu năng").font(.largeTitle.weight(.bold))
-                Text("Cập nhật mỗi 2 giây.").foregroundStyle(.secondary)
+                Text(L("Hiệu năng", "Performance")).font(.largeTitle.weight(.bold))
+                Text(L("Cập nhật mỗi 2 giây.", "Updates every 2 seconds.")).foregroundStyle(.secondary)
             }
             Grid(horizontalSpacing: 12) {
                 GridRow {
                     let mem = state.memory
                     let pressure = Double(mem.used) / Double(max(mem.total, 1))
                     MetricCard(title: "RAM", value: "\(Format.bytes(mem.used)) / \(Format.bytes(mem.total))",
-                               detail: "Nén \(Format.bytes(mem.compressed)) · swap \(Format.bytes(mem.swapUsed))",
+                               detail: L("Nén \(Format.bytes(mem.compressed)) · swap \(Format.bytes(mem.swapUsed))", "Compressed \(Format.bytes(mem.compressed)) · swap \(Format.bytes(mem.swapUsed))"),
                                series: state.memoryHistory, color: pressure > 0.85 ? Palette.warn : Palette.accent)
                     MetricCard(title: "CPU", value: Format.percent(state.cpuHistory.last ?? 0),
-                               detail: "\(ProcessInfo.processInfo.activeProcessorCount) nhân",
+                               detail: L("\(ProcessInfo.processInfo.activeProcessorCount) nhân", "\(ProcessInfo.processInfo.activeProcessorCount) cores"),
                                series: state.cpuHistory, color: Palette.accent)
                     MetricCard(title: "GPU", value: Format.percent(state.gpuHistory.last ?? 0),
-                               detail: "Theo IOAccelerator", series: state.gpuHistory, color: Palette.accent)
-                    MetricCard(title: "Ổ đĩa", value: Format.bytes(state.diskFree),
-                               detail: "còn trống trên \(Format.bytes(state.diskTotal))", series: [], color: Palette.alert)
+                               detail: L("Theo IOAccelerator", "From IOAccelerator"), series: state.gpuHistory, color: Palette.accent)
+                    MetricCard(title: L("Ổ đĩa", "Disk"), value: Format.bytes(state.diskFree),
+                               detail: L("còn trống trên \(Format.bytes(state.diskTotal))", "free of \(Format.bytes(state.diskTotal))"), series: [], color: Palette.alert)
                 }
             }
             VStack(spacing: 0) {
                 HStack {
-                    Text("Tiến trình dùng nhiều CPU nhất").fontWeight(.semibold)
+                    Text(L("Tiến trình dùng nhiều CPU nhất", "Top CPU processes")).fontWeight(.semibold)
                     Spacer()
                     Text("CPU").frame(width: 80, alignment: .trailing)
                     Text("RAM").frame(width: 100, alignment: .trailing)

@@ -40,10 +40,10 @@ private struct DiskCard: View {
         let used = state.diskTotal - state.diskFree
         let low = Double(state.diskFree) / Double(max(state.diskTotal, 1)) < 0.1
         let slices = [
-            Slice(id: "free", title: "Còn trống", value: state.diskFree, color: low ? Palette.alert : Palette.accent),
-            Slice(id: "safe", title: "Dọn an toàn", value: safe, color: Palette.safe),
-            Slice(id: "warn", title: "Cần cân nhắc", value: warn, color: Palette.warn),
-            Slice(id: "other", title: "Hệ thống và dữ liệu", value: max(used - safe - warn, 0), color: Palette.other),
+            Slice(id: "free", title: L("Còn trống", "Free"), value: state.diskFree, color: low ? Palette.alert : Palette.accent),
+            Slice(id: "safe", title: L("Dọn an toàn", "Safe to clean"), value: safe, color: Palette.safe),
+            Slice(id: "warn", title: L("Cần cân nhắc", "Review first"), value: warn, color: Palette.warn),
+            Slice(id: "other", title: L("Hệ thống và dữ liệu", "System and data"), value: max(used - safe - warn, 0), color: Palette.other),
         ]
         Card {
             VStack(spacing: 14) {
@@ -58,7 +58,7 @@ private struct DiskCard: View {
                     VStack(spacing: 2) {
                         Text(Format.bytes(state.diskFree)).font(.system(size: 24, weight: .bold)).monospacedDigit()
                             .foregroundStyle(low ? Palette.alert : .primary)
-                        Text("còn trống").font(.caption).foregroundStyle(.secondary)
+                        Text(L("còn trống", "free")).font(.caption).foregroundStyle(.secondary)
                     }
                 }
                 .frame(width: 168, height: 168)
@@ -76,7 +76,7 @@ private struct DiskCard: View {
                 Button {
                     state.selectSafe()
                 } label: {
-                    Text("Chọn dọn an toàn \(Format.bytes(safe))").fontWeight(.semibold).frame(maxWidth: .infinity)
+                    Text(L("Chọn dọn an toàn \(Format.bytes(safe))", "Select safe items · \(Format.bytes(safe))")).fontWeight(.semibold).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent).tint(Palette.accent).controlSize(.large)
                 .disabled(safe == 0)
@@ -102,12 +102,12 @@ private struct GrowthCard: View {
         Card {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
-                    Text("Ghi mới 7 ngày qua").font(.title3.weight(.semibold))
+                    Text(L("Ghi mới 7 ngày qua", "Written in the last 7 days")).font(.title3.weight(.semibold))
                     Text(Format.bytes(total)).font(.system(size: 24, weight: .bold)).monospacedDigit()
-                    Text("theo ngày sửa tệp").font(.callout).foregroundStyle(.secondary)
+                    Text(L("theo ngày sửa tệp", "by file modification date")).font(.callout).foregroundStyle(.secondary)
                 }
                 if rows.isEmpty {
-                    Text("Chưa có vị trí nào được ghi thêm trong 7 ngày.").foregroundStyle(.secondary)
+                    Text(L("Chưa có vị trí nào được ghi thêm trong 7 ngày.", "Nothing has grown in the last 7 days.")).foregroundStyle(.secondary)
                 }
                 ForEach(Array(rows), id: \.0) { app, growth, level in
                     Button { state.route = .app(app) } label: {
@@ -141,7 +141,7 @@ private struct GroupGrid: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Theo nhóm").font(.title3.weight(.semibold))
+            Text(L("Theo nhóm", "By group")).font(.title3.weight(.semibold))
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 3), spacing: 12) {
                 ForEach(AppKind.allCases.filter { state.size(of: $0) > 0 }.sorted { state.size(of: $0) > state.size(of: $1) }) { app in
                     GroupCard(app: app)
@@ -175,7 +175,7 @@ private struct GroupCard: View {
                     Text(Format.bytes(totalSize)).font(.title2.weight(.bold)).monospacedDigit()
                     MeterBar(segments: [.init(value: Double(safe) / total, color: Palette.safe),
                                         .init(value: Double(warn) / total, color: Palette.warn)], height: 4)
-                    Text("An toàn \(Format.bytes(safe)) · Cân nhắc \(Format.bytes(warn))")
+                    Text(L("An toàn \(Format.bytes(safe)) · Cân nhắc \(Format.bytes(warn))", "Safe \(Format.bytes(safe)) · Review \(Format.bytes(warn))"))
                         .font(.caption).foregroundStyle(.secondary).lineLimit(1)
                 }
             }
@@ -201,10 +201,10 @@ private struct AlertList: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Cảnh báo").font(.title3.weight(.semibold))
+            Text(L("Cảnh báo", "Alerts")).font(.title3.weight(.semibold))
             let alerts = self.alerts
             if alerts.isEmpty {
-                Card { Label("Không có gì đáng lo.", systemImage: "checkmark.circle").foregroundStyle(Palette.safe) }
+                Card { Label(L("Không có gì đáng lo.", "Nothing to worry about."), systemImage: "checkmark.circle").foregroundStyle(Palette.safe) }
             }
             ForEach(alerts) { alert in
                 Button {
@@ -238,24 +238,24 @@ private struct AlertList: View {
         let total = Double(max(state.diskTotal, 1))
         let safe = state.size(state.items.filter { $0.risk == .safe })
         if Double(state.diskFree) / total < 0.1 {
-            list.append(Alert(id: "disk", color: Palette.alert, symbol: "externaldrive.fill.badge.exclamationmark", title: "Ổ đĩa còn \(Format.bytes(state.diskFree))",
-                              body: "Xcode có thể không build được. Dọn an toàn lấy lại \(Format.bytes(safe)).",
+            list.append(Alert(id: "disk", color: Palette.alert, symbol: "externaldrive.fill.badge.exclamationmark", title: L("Ổ đĩa còn \(Format.bytes(state.diskFree))", "Only \(Format.bytes(state.diskFree)) free"),
+                              body: L("Xcode có thể không build được. Dọn an toàn lấy lại \(Format.bytes(safe)).", "Xcode may fail to build. Safe cleaning frees \(Format.bytes(safe))."),
                               action: { state.selectSafe() }))
         }
         for item in state.growing.prefix(3) {
             list.append(Alert(id: item.id, color: Palette.color(item.level), symbol: item.level.symbol, title: "\(item.name) +\(Format.bytes(item.growth7))",
-                              body: "\(Format.percent(min(Double(item.growth7) / Double(max(item.size, 1)), 1))) dung lượng là mới trong 7 ngày. \(item.reason).",
+                              body: L("\(Format.percent(min(Double(item.growth7) / Double(max(item.size, 1)), 1))) dung lượng là mới trong 7 ngày. \(item.reason).", "\(Format.percent(min(Double(item.growth7) / Double(max(item.size, 1)), 1))) of its size was written in the last 7 days. \(item.reason)."),
                               item: item))
         }
         if !state.hasFullDiskAccess {
-            list.append(Alert(id: "fda", color: .secondary, symbol: "lock.shield", title: "Chưa có Full Disk Access",
-                              body: "Đang bỏ qua bản cài lên iPhone thật của Xcode và Thùng rác.",
+            list.append(Alert(id: "fda", color: .secondary, symbol: "lock.shield", title: L("Chưa có Full Disk Access", "No Full Disk Access"),
+                              body: L("Đang bỏ qua bản cài lên iPhone thật của Xcode và Thùng rác.", "Skipping Xcode's device install files and the Trash."),
                               action: { Permissions.openFullDiskAccessSettings() }))
         }
         if let boot = MachineInfoReader.bootTime(), Date().timeIntervalSince(boot) > 7 * 86_400 {
             let days = Int(Date().timeIntervalSince(boot) / 86_400)
-            list.append(Alert(id: "uptime", color: .secondary, symbol: "clock.arrow.circlepath", title: "Máy chạy \(days) ngày chưa khởi động lại",
-                              body: "Khởi động lại giải phóng bộ nhớ swap và tệp tạm của hệ thống.",
+            list.append(Alert(id: "uptime", color: .secondary, symbol: "clock.arrow.circlepath", title: L("Máy chạy \(days) ngày chưa khởi động lại", "Running \(days) days without a restart"),
+                              body: L("Khởi động lại giải phóng bộ nhớ swap và tệp tạm của hệ thống.", "Restarting frees swap and system temporary files."),
                               action: { state.showingMachineInfo = true }))
         }
         return list

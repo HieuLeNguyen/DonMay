@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @Environment(AppState.self) private var state
+    @Environment(\.openSettings) private var openSettings
 
     var body: some View {
         @Bindable var state = state
@@ -42,22 +43,28 @@ struct RootView: View {
                 Button {
                     Task { await state.scan() }
                 } label: {
-                    Label(state.isScanning ? "Đang quét…" : "Quét lại", systemImage: "arrow.clockwise")
+                    Label(state.isScanning ? L("Đang quét…", "Scanning…") : L("Quét lại", "Rescan"), systemImage: "arrow.clockwise")
                 }
                 .disabled(state.isScanning || state.isCleaning)
             }
+            ToolbarItem(placement: .primaryAction) {
+                Button { openSettings() } label: {
+                    Label(L("Cài đặt", "Settings"), systemImage: "gearshape")
+                }
+            }
         }
         .navigationTitle("Dọn Máy")
-        .navigationSubtitle(state.lastScan.map { "Quét lúc \(Format.dateTime($0))" } ?? "")
+        .navigationSubtitle(state.lastScan.map { L("Quét lúc \(Format.dateTime($0))", "Scanned \(Format.dateTime($0))") } ?? "")
         .sheet(isPresented: $state.confirming) { ConfirmSheet() }
         .sheet(item: $state.detailItem) { item in ItemDetailSheet(item: item) }
         .sheet(isPresented: $state.showingMachineInfo) { MachineInfoSheet() }
         .sheet(isPresented: $state.showingTrash) { TrashSheet() }
-        .confirmationDialog("Dọn Thùng rác?", isPresented: $state.confirmingTrash) {
-            Button("Dọn Thùng rác", role: .destructive) { state.emptyTrash() }
+        .confirmationDialog(L("Dọn Thùng rác?", "Empty Trash?"), isPresented: $state.confirmingTrash) {
+            Button(L("Dọn Thùng rác", "Empty Trash"), role: .destructive) { state.emptyTrash() }
         } message: {
-            Text("Mọi thứ trong Thùng rác bị xoá hẳn, không hoàn tác được. Bản nén trong Lịch sử dọn không bị ảnh hưởng.")
+            Text(L("Mọi thứ trong Thùng rác bị xoá hẳn, không hoàn tác được. Bản nén trong Lịch sử dọn không bị ảnh hưởng.", "Everything in the Trash is permanently deleted and can't be undone. Backups in Cleanup History aren't affected."))
         }
+        .id(Preferences.shared.language)
         .task {
             state.startMetrics()
             await state.scan()
@@ -74,7 +81,7 @@ struct NoticeBar: View {
             Image(systemName: "info.circle.fill").foregroundStyle(.secondary)
             Text(text)
             Spacer()
-            Button("Đóng", action: close).buttonStyle(.borderless)
+            Button(L("Đóng", "Close"), action: close).buttonStyle(.borderless)
         }
         .padding(.horizontal, 28).padding(.vertical, 10)
         .background(Color.primary.opacity(0.05))
@@ -89,8 +96,8 @@ struct CleanBanner: View {
         HStack(spacing: 12) {
             ProgressView().controlSize(.small)
             Text(state.isCleaning
-                 ? (state.cleanStep.isEmpty ? "Đang dọn…" : "Đang dọn · \(state.cleanStep)")
-                 : "Đang giải phóng dung lượng ở nền · còn \(state.purgeRemaining) mục")
+                 ? (state.cleanStep.isEmpty ? L("Đang dọn…", "Cleaning…") : L("Đang dọn · \(state.cleanStep)", "Cleaning · \(state.cleanStep)"))
+                 : L("Đang giải phóng dung lượng ở nền · còn \(state.purgeRemaining) mục", "Freeing space in the background · \(state.purgeRemaining) left"))
                 .lineLimit(1).truncationMode(.middle)
             Spacer()
             if state.isCleaning {
@@ -109,16 +116,16 @@ struct BottomBar: View {
         HStack(spacing: 14) {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text("Lấy lại").foregroundStyle(.secondary)
+                    Text(L("Lấy lại", "Reclaim")).foregroundStyle(.secondary)
                     Text(Format.bytes(state.selectedFreedSize)).font(.title2.weight(.semibold)).monospacedDigit()
-                    if !state.selection.isEmpty { Text("· \(state.selection.count) mục").foregroundStyle(.secondary) }
+                    if !state.selection.isEmpty { Text(L("· \(state.selection.count) mục", "· \(state.selection.count) items")).foregroundStyle(.secondary) }
                 }
                 Text(note).font(.callout).foregroundStyle(.secondary)
             }
             Spacer()
-            Button("Bỏ chọn") { state.selection.removeAll() }
+            Button(L("Bỏ chọn", "Deselect")) { state.selection.removeAll() }
                 .disabled(state.selection.isEmpty)
-            Button("Dọn các mục đã chọn") { state.confirming = true }
+            Button(L("Dọn các mục đã chọn", "Clean Selected")) { state.confirming = true }
                 .buttonStyle(.borderedProminent)
                 .tint(Palette.accent)
                 .controlSize(.large)
@@ -134,14 +141,14 @@ struct BottomBar: View {
 
     private var note: String {
         let items = state.selectedItems
-        guard !items.isEmpty else { return "Chọn mục để dọn." }
+        guard !items.isEmpty else { return L("Chọn mục để dọn.", "Select items to clean.") }
         let warn = items.filter { $0.risk == .warn }.count
         let irreversible = items.filter { $0.undo == .irreversible }.count
         let parts = [
-            state.selectedKeptSize > 0 ? "Giữ bản nén \(Format.bytes(state.selectedKeptSize))" : nil,
-            warn > 0 ? "\(warn) mục cần cân nhắc" : nil,
-            irreversible > 0 ? "\(irreversible) mục không hoàn tác được" : nil,
+            state.selectedKeptSize > 0 ? L("Giữ bản nén \(Format.bytes(state.selectedKeptSize))", "Keeps \(Format.bytes(state.selectedKeptSize)) of backups") : nil,
+            warn > 0 ? L("\(warn) mục cần cân nhắc", "\(warn) need review") : nil,
+            irreversible > 0 ? L("\(irreversible) mục không hoàn tác được", "\(irreversible) can't be undone") : nil,
         ].compactMap { $0 }
-        return parts.isEmpty ? "Toàn bộ là mục an toàn." : parts.joined(separator: " · ")
+        return parts.isEmpty ? L("Toàn bộ là mục an toàn.", "All items are safe.") : parts.joined(separator: " · ")
     }
 }
