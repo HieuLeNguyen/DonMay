@@ -38,9 +38,7 @@ struct Sidebar: View {
                             HStack(spacing: 8) {
                                 AppLogo(app: app, size: 20)
                                 Text(app.title)
-                                if state.level(of: app) == .spike {
-                                    Circle().fill(Palette.alert).frame(width: 7, height: 7).help(GrowthLevel.spike.title)
-                                }
+                                GrowthIcon(level: state.level(of: app), size: 10)
                                 Spacer()
                                 size(state.size(of: app))
                             }

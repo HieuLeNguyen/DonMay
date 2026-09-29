@@ -193,7 +193,11 @@ private struct GroupCard: View {
                         AppLogo(app: app, size: 36, level: level)
                         VStack(alignment: .leading, spacing: 1) {
                             Text(app.title).fontWeight(.semibold)
-                            Text(level.title).font(.caption).foregroundStyle(level == .flat ? .secondary : Palette.color(level))
+                            if level == .flat {
+                                Text(level.title).font(.caption).foregroundStyle(.secondary)
+                            } else {
+                                GrowthIcon(level: level, size: 13)
+                            }
                         }
                         Spacer()
                         Text(Format.bytes(state.size(list))).font(.title3.weight(.semibold)).monospacedDigit()

@@ -89,7 +89,7 @@ private struct ItemRow: View {
                     Chip(text: "Ổn định", color: .secondary)
                 } else {
                     Chip(text: "+\(Format.bytes(item.growth7)) / 7 ngày", color: Palette.color(item.level),
-                         systemImage: item.level == .spike ? "chevron.up.2" : "arrow.up")
+                         systemImage: item.level.symbol)
                 }
             }
             .frame(width: 150, alignment: .leading)

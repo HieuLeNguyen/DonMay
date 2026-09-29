@@ -42,10 +42,7 @@ struct ItemDetailSheet: View {
                 HStack(spacing: 8) {
                     Text(item.app.title).foregroundStyle(.secondary)
                     RiskChip(risk: item.risk)
-                    if item.level != .flat {
-                        Chip(text: item.level.title, color: Palette.color(item.level),
-                             systemImage: item.level == .spike ? "chevron.up.2" : "arrow.up")
-                    }
+                    GrowthIcon(level: item.level, size: 15)
                 }
             }
             Spacer()

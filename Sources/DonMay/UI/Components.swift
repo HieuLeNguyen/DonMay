@@ -53,13 +53,34 @@ struct GrowthBadge: View {
     var size: CGFloat = 18
 
     var body: some View {
-        Image(systemName: level == .spike ? "chevron.up.2" : "arrow.up")
+        Image(systemName: level.symbol)
             .font(.system(size: size * 0.5, weight: .heavy))
             .foregroundStyle(.white)
             .frame(width: size, height: size)
             .background(Circle().fill(Palette.color(level)))
             .overlay(Circle().stroke(Color(nsColor: .windowBackgroundColor), lineWidth: 2))
             .help(level.title)
+    }
+}
+
+extension GrowthLevel {
+    /// ^^ tăng bất thường, ^ đang tăng.
+    var symbol: String { self == .spike ? "chevron.up.2" : "chevron.up" }
+}
+
+/// Mũi tên chồng thay cho chữ "Tăng bất thường" / "Đang tăng"; chữ vẫn có khi rê chuột và cho VoiceOver.
+struct GrowthIcon: View {
+    let level: GrowthLevel
+    var size: CGFloat = 12
+
+    var body: some View {
+        if level != .flat {
+            Image(systemName: level.symbol)
+                .font(.system(size: size, weight: .heavy))
+                .foregroundStyle(Palette.color(level))
+                .help(level.title)
+                .accessibilityLabel(level.title)
+        }
     }
 }
 
