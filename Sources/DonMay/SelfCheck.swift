@@ -67,6 +67,16 @@ enum SelfCheck {
         expect(!refused(home + "/Library/Containers/com.apple.CoreDevice.CoreDeviceService/Data/Library/Caches/AppInstallationBinaryDeltas/com.x.app"),
                "Cho phép một phần bên trong bản cài lên iPhone thật")
 
+        expect(!refused(home + "/.codex/sessions/2026/09"), "Cho phép phiên Codex theo tháng")
+        expect(!refused(home + "/.codex/logs_2.sqlite"), "Cho phép nhật ký Codex")
+        expect(refused(home + "/.codex/config.toml"), "Từ chối cấu hình Codex")
+        expect(refused(home + "/.codex"), "Từ chối xoá cả thư mục Codex")
+        expect(!refused("/opt/homebrew/Cellar/node/22.1.0"), "Cho phép một phiên bản gói brew")
+        expect(refused("/opt/homebrew/Cellar/node"), "Từ chối xoá cả gói brew")
+        expect(!refused(home + "/.Trash/old.zip"), "Cho phép mục trong Thùng rác")
+        expect(Rules.projectName("-Users-nguyenhieu-Documents-MyProjects-DonMay") == "DonMay"
+               || !home.hasSuffix("nguyenhieu"), "Giải tên dự án từ thư mục hội thoại Claude")
+
         let item = CleanItem(id: "t", app: .xcode, name: "t", reason: "", displayPath: "", size: 10 * .gb, lastUsed: nil,
                              risk: .safe, undo: .regenerate, growth24: 0, growth7: 5 * .gb, action: .files([]), regenerateHint: "")
         expect(item.level == .spike, "5 GB mới trên 10 GB là tăng bất thường")

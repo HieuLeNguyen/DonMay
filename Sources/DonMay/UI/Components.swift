@@ -38,6 +38,9 @@ struct AppLogo: View {
             Group {
                 if let icon = AppIcons.icon(for: app) {
                     Image(nsImage: icon).resizable().interpolation(.high)
+                } else if app == .homebrew {
+                    RoundedRectangle(cornerRadius: size * 0.22).fill(Color(red: 0.98, green: 0.72, blue: 0.25))
+                        .overlay(Image(systemName: "mug.fill").font(.system(size: size * 0.5)).foregroundStyle(.white))
                 } else {
                     RoundedRectangle(cornerRadius: size * 0.22).fill(Color(red: 0.72, green: 0.25, blue: 0.18))
                         .overlay(Text("npm").font(.system(size: size * 0.3, weight: .bold)).foregroundStyle(.white))

@@ -7,8 +7,9 @@ enum Rules {
 
     static func all(finding: (AppKind) -> Void = { _ in }) -> [Candidate] {
         let groups: [(AppKind, () -> [Candidate])] = [
-            (.xcode, xcode), (.simulator, simulator), (.claude, claude), (.zen, zen), (.figma, figma), (.pencil, pencil),
-            (.cli, cli), (.documents, documents), (.desktop, desktop), (.downloads, downloads), (.macos, macos),
+            (.xcode, xcode), (.simulator, simulator), (.claude, claude), (.codex, codex), (.zen, zen), (.figma, figma),
+            (.pencil, pencil), (.homebrew, homebrew), (.cli, cli), (.notes, notes), (.documents, documents),
+            (.desktop, desktop), (.downloads, downloads), (.macos, macos), (.updates, updates),
         ]
         return groups.flatMap { app, rule in
             finding(app)
@@ -210,9 +211,15 @@ enum Rules {
             })
         }
 
-        let projects = home.under(".claude", "projects")
-        if projects.exists {
-            list.append(.fixed(.claude, "Bản ghi hội thoại", projects, .keep, "Cần để resume phiên cũ", undo: .backup))
+        for project in home.under(".claude", "projects").children() where project.isDirectory {
+            list.append(Candidate(app: .claude, name: "Hội thoại · \(projectName(project.lastPathComponent))", urls: [project],
+                                  undo: .backup, regenerateHint: "Không resume được các phiên đã xoá") { m in
+                conversationRisk(m)
+            })
+        }
+        let fileHistory = home.under(".claude", "file-history")
+        if fileHistory.exists {
+            list.append(.fixed(.claude, "Lịch sử sửa tệp", fileHistory, .warn, "Mất khả năng rewind các lần Claude sửa tệp ở phiên cũ"))
         }
         let desktop = library.under("Application Support", "Claude")
         let vm = desktop.under("vm_bundles")
@@ -226,6 +233,135 @@ enum Rules {
                                   regenerateHint: "Tự tạo lại") { _ in (.safe, "Tự tạo lại") })
         }
         return list
+    }
+
+    /// Phiên sửa trong 30 ngày qua còn hay được resume; cũ hơn thì hiếm khi cần.
+    private static func conversationRisk(_ m: Measurement) -> (Risk, String) {
+        (m.lastModified ?? .distantPast) > Date().addingTimeInterval(-30 * 86_400)
+            ? (.warn, "Có phiên trong 30 ngày qua, xoá thì không resume được")
+            : (.safe, "Hơn 30 ngày không đụng tới")
+    }
+
+    /// "-Users-an-Documents-blood-pressure" → "blood-pressure": dò từng đoạn xem thư mục nào có thật,
+    /// vì tên thư mục dự án cũng có thể chứa dấu gạch.
+    static func projectName(_ encoded: String) -> String {
+        let tokens = encoded.split(separator: "-", omittingEmptySubsequences: false).dropFirst().map(String.init)
+        var path = URL(fileURLWithPath: "/")
+        var pending: [String] = []
+        for token in tokens {
+            pending.append(token)
+            let candidate = path.appendingPathComponent(pending.joined(separator: "-"))
+            if candidate.isDirectory {
+                path = candidate
+                pending = []
+            }
+        }
+        if !pending.isEmpty { return pending.joined(separator: "-") }
+        return path.path == home.path ? "Thư mục nhà" : path.lastPathComponent
+    }
+
+    // MARK: - Codex
+
+    static func codex() -> [Candidate] {
+        var list: [Candidate] = []
+        let root = home.under(".codex")
+        for year in root.under("sessions").children() where year.isDirectory {
+            for month in year.children() where month.isDirectory {
+                list.append(Candidate(app: .codex, name: "Phiên hội thoại · \(month.lastPathComponent)/\(year.lastPathComponent)",
+                                      urls: [month], undo: .backup, regenerateHint: "Không resume được các phiên đã xoá") { m in
+                    conversationRisk(m)
+                })
+            }
+        }
+        let archived = root.under("archived_sessions")
+        if archived.exists {
+            list.append(.fixed(.codex, "Phiên đã lưu trữ", archived, .safe, "Phiên Ngài đã lưu trữ trong Codex", undo: .backup))
+        }
+        let logs = ["logs_2.sqlite", "logs_2.sqlite-wal", "logs_2.sqlite-shm", "log"].map { root.under($0) }.filter(\.exists)
+        if !logs.isEmpty {
+            list.append(Candidate(app: .codex, name: "Nhật ký", urls: logs, regenerateHint: "Codex ghi lại từ đầu") { _ in
+                (.safe, "Chỉ dùng để gỡ lỗi. Nên thoát Codex trước")
+            })
+        }
+        for (name, url, risk, reason) in [
+            ("Runtime", home.under(".cache", "codex-runtimes"), Risk.warn, "Codex tải lại khi chạy"),
+            ("Shell snapshot", root.under("shell_snapshots"), .safe, "Tự tạo lại"),
+            ("Computer use", root.under("computer-use"), .warn, "Codex tải lại khi dùng computer use"),
+            ("Plugin đã cài", root.under("plugins"), .keep, "Plugin Ngài đã cài vào Codex"),
+        ] where url.exists {
+            list.append(.fixed(.codex, name, url, risk, reason))
+        }
+        return list
+    }
+
+    // MARK: - Homebrew
+
+    private static let brewPrefix = URL(fileURLWithPath: FileManager.default.fileExists(atPath: "/opt/homebrew") ? "/opt/homebrew" : "/usr/local")
+
+    static func homebrew() -> [Candidate] {
+        var list: [Candidate] = []
+        let cache = library.under("Caches", "Homebrew")
+        if cache.exists { list.append(.fixed(.homebrew, "Bộ nhớ đệm tải về", cache, .safe, "brew tải lại khi cài hoặc nâng cấp")) }
+
+        let old = oldKegs(in: brewPrefix.under("Cellar")) + oldKegs(in: brewPrefix.under("Caskroom"))
+        if !old.isEmpty {
+            list.append(Candidate(app: .homebrew, name: "\(old.count) phiên bản gói cũ", urls: old,
+                                  regenerateHint: "brew install lại phiên bản cũ nếu cần", id: "homebrew:old") { _ in
+                (.safe, "Đã có bản mới hơn, giống việc brew cleanup làm")
+            })
+        }
+        let cellar = brewPrefix.under("Cellar")
+        if cellar.exists { list.append(.fixed(.homebrew, "Gói đang cài", cellar, .keep, "Gỡ bằng brew uninstall, không xoá tay")) }
+        return list
+    }
+
+    /// Mỗi gói giữ bản đang được liên kết trong opt/ (hoặc bản mới nhất); các bản còn lại là bản cũ.
+    private static func oldKegs(in root: URL) -> [URL] {
+        root.children().filter(\.isDirectory).flatMap { formula -> [URL] in
+            let versions = formula.children().filter { $0.isDirectory && !$0.lastPathComponent.hasPrefix(".") }
+            guard versions.count > 1 else { return [] }
+            let linked = (try? FileManager.default.destinationOfSymbolicLink(atPath: brewPrefix.under("opt", formula.lastPathComponent).path))
+                .map { URL(fileURLWithPath: $0, relativeTo: brewPrefix.under("opt")).standardizedFileURL.lastPathComponent }
+            let current = linked ?? versions.max { ($0.modificationDate ?? .distantPast) < ($1.modificationDate ?? .distantPast) }?.lastPathComponent
+            return versions.filter { $0.lastPathComponent != current }
+        }
+    }
+
+    // MARK: - Ghi chú
+
+    static func notes() -> [Candidate] {
+        let root = library.under("Group Containers", "group.com.apple.notes")
+        guard Permissions.hasFullDiskAccess, root.exists else { return [] }
+        let media = ["Accounts", "Media"].map { root.under($0) }.filter(\.exists)
+        let store = ["NoteStore.sqlite", "NoteStore.sqlite-wal"].map { root.under($0) }.filter(\.exists)
+        var list: [Candidate] = []
+        if !store.isEmpty {
+            list.append(Candidate(app: .notes, name: "Nội dung ghi chú", urls: store, id: "notes:store") { _ in
+                (.keep, "Dữ liệu gốc của Ghi chú. Chỉ theo dõi dung lượng")
+            })
+        }
+        if !media.isEmpty {
+            list.append(Candidate(app: .notes, name: "Ảnh và tệp đính kèm", urls: media, id: "notes:media") { _ in
+                (.keep, "Xoá ghi chú có đính kèm lớn ngay trong ứng dụng Ghi chú")
+            })
+        }
+        return list
+    }
+
+    // MARK: - Bản cập nhật ứng dụng
+
+    static func updates() -> [Candidate] {
+        let caches = library.under("Caches")
+        let markers = [".ShipIt", "-updater", ".Sparkle", "GoogleUpdater", "SoftwareUpdate"]
+        return caches.children().filter { url in
+            url.isDirectory && markers.contains { url.lastPathComponent.localizedCaseInsensitiveContains($0) }
+        }
+        .map { url in
+            let name = url.lastPathComponent
+                .replacingOccurrences(of: ".ShipIt", with: "").replacingOccurrences(of: "-updater", with: "")
+            return .fixed(.updates, "Bản cập nhật · \(name)", url, .safe,
+                          "Bản cập nhật đã tải sẵn. Ứng dụng tải lại khi cần", hint: "Ứng dụng tải lại khi kiểm tra cập nhật")
+        }
     }
 
     // MARK: - Trình duyệt và công cụ thiết kế
@@ -294,10 +430,8 @@ enum Rules {
     static func cli() -> [Candidate] {
         [
             ("Bộ nhớ đệm npm", home.under(".npm"), Risk.safe, "npm install tải lại"),
-            ("Homebrew", library.under("Caches", "Homebrew"), .safe, "brew tải lại khi cài"),
             ("CocoaPods", library.under("Caches", "CocoaPods"), .safe, "pod install tải lại"),
             ("Firebase emulator", home.under(".cache", "firebase"), .safe, "Emulator tải lại khi chạy"),
-            ("Codex runtimes", home.under(".cache", "codex-runtimes"), .warn, "Codex CLI tải lại khi chạy"),
             ("Gradle", home.under(".gradle", "caches"), .safe, "Gradle tải lại khi build"),
         ].filter { $0.1.exists }.map { .fixed(.cli, $0.0, $0.1, $0.2, $0.3) }
     }

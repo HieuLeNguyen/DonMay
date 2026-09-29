@@ -30,6 +30,7 @@ final class AppState {
     private var decidedBackups = Set<String>()
     var filter: Risk?
     var query = ""
+    var sort: ItemSort = .size
 
     var history: [HistorySession] = HistoryStore.load()
     var isCleaning = false
@@ -39,6 +40,7 @@ final class AppState {
     var cleanStep = ""
     var confirming = false
     var confirmingTrash = false
+    var showingTrash = false
     var notice: String?
 
     var diskFree = SystemMetrics.diskFree()
@@ -114,6 +116,13 @@ final class AppState {
 
     func selectSafe(in app: AppKind? = nil) {
         items.filter { $0.risk == .safe && (app == nil || $0.app == app) }.forEach { selection.insert($0.id) }
+    }
+
+    func deselect(in app: AppKind) {
+        for item in items(of: app) {
+            selection.remove(item.id)
+            partial[item.id] = nil
+        }
     }
 
     // MARK: - Quét
@@ -267,6 +276,16 @@ final class AppState {
         }
     }
 
+    /// Dời vào thư mục chờ rồi xoá ở nền, như khi dọn các mục khác.
+    func removeFromTrash(_ paths: [String]) {
+        let failed = paths.filter { path in
+            (try? Safety.check(path)).flatMap { try? Cleaner.moveToPurge(URL(fileURLWithPath: path)) } == nil
+        }
+        trashSize = Cleaner.trashSize()
+        if !failed.isEmpty { notice = "\(failed.count) mục trong Thùng rác không xoá được." }
+        drainPurge()
+    }
+
     // MARK: - Hiệu năng
 
     func startMetrics() {
@@ -295,6 +314,28 @@ final class AppState {
     private func append(_ series: inout [Double], _ value: Double) {
         series.append(value)
         if series.count > 60 { series.removeFirst(series.count - 60) }
+    }
+}
+
+enum ItemSort: String, CaseIterable {
+    case size, growth, oldest, name
+
+    var title: String {
+        switch self {
+        case .size: "Dung lượng lớn nhất"
+        case .growth: "Tăng nhanh nhất"
+        case .oldest: "Lâu chưa dùng nhất"
+        case .name: "Tên A–Z"
+        }
+    }
+
+    func sorted(_ items: [CleanItem]) -> [CleanItem] {
+        switch self {
+        case .size: items.sorted { $0.size > $1.size }
+        case .growth: items.sorted { ($0.growth7, $0.size) > ($1.growth7, $1.size) }
+        case .oldest: items.sorted { ($0.lastUsed ?? .distantPast) < ($1.lastUsed ?? .distantPast) }
+        case .name: items.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        }
     }
 }
 

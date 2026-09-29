@@ -8,11 +8,11 @@ struct ItemListView: View {
     var body: some View {
         @Bindable var state = state
         let all = state.items(of: app)
-        let rows = all.filter { item in
+        let rows = state.sort.sorted(all.filter { item in
             (state.filter == nil || item.risk == state.filter)
                 && (state.query.isEmpty || item.name.localizedCaseInsensitiveContains(state.query)
                     || item.displayPath.localizedCaseInsensitiveContains(state.query))
-        }
+        })
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 14) {
                 AppLogo(app: app, size: 44, level: state.level(of: app))
@@ -37,9 +37,15 @@ struct ItemListView: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 .frame(maxWidth: 380)
+                Picker("Sắp xếp", selection: $state.sort) {
+                    ForEach(ItemSort.allCases, id: \.self) { Text($0.title).tag($0) }
+                }
+                .fixedSize()
                 TextField("Tìm mục", text: $state.query).textFieldStyle(.roundedBorder).frame(maxWidth: 220)
                 Spacer()
                 Button("Chọn mục an toàn") { state.selectSafe(in: app) }
+                Button("Bỏ chọn trong mục này") { state.deselect(in: app) }
+                    .disabled(!all.contains { state.selection.contains($0.id) })
             }
             if rows.isEmpty {
                 Text(all.isEmpty ? "Không có gì để dọn ở đây." : "Không có mục nào khớp bộ lọc.")

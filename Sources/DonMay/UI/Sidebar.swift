@@ -73,11 +73,19 @@ struct TrashCard: View {
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }
-            Button("Dọn Thùng rác") { state.confirmingTrash = true }
-                .frame(maxWidth: .infinity)
-                .disabled(state.trashSize == 0)
+            HStack {
+                Button("Xem") { state.showingTrash = true }
+                    .frame(maxWidth: .infinity)
+                    .disabled(state.trashSize == nil || state.trashSize == 0)
+                Button("Dọn hết") { state.confirmingTrash = true }
+                    .frame(maxWidth: .infinity)
+                    .disabled(state.trashSize == 0)
+            }
         }
         .padding(12)
+        .contentShape(Rectangle())
+        .onTapGesture { if state.trashSize != nil { state.showingTrash = true } }
+        .help("Bấm để xem Thùng rác trước khi xoá")
         .background(RoundedRectangle(cornerRadius: 10).fill(Color(nsColor: .controlBackgroundColor)))
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.primary.opacity(0.08)))
     }

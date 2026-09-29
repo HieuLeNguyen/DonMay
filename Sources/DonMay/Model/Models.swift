@@ -49,17 +49,17 @@ enum AppGroup: String, CaseIterable, Identifiable {
 }
 
 enum AppKind: String, CaseIterable, Codable, Identifiable {
-    case figma, pencil, xcode, claude, simulator, cli, zen, desktop, downloads, documents, macos
+    case figma, pencil, xcode, claude, codex, simulator, homebrew, cli, zen, notes, desktop, downloads, documents, macos, updates
 
     var id: String { rawValue }
 
     var group: AppGroup {
         switch self {
         case .figma, .pencil: .design
-        case .xcode, .claude, .simulator, .cli: .develop
+        case .xcode, .claude, .codex, .simulator, .homebrew, .cli: .develop
         case .zen: .browser
-        case .desktop, .downloads, .documents: .folders
-        case .macos: .system
+        case .notes, .desktop, .downloads, .documents: .folders
+        case .macos, .updates: .system
         }
     }
 
@@ -69,6 +69,10 @@ enum AppKind: String, CaseIterable, Codable, Identifiable {
         case .pencil: "Pencil"
         case .xcode: "Xcode"
         case .claude: "Claude CLI"
+        case .codex: "Codex"
+        case .homebrew: "Homebrew"
+        case .notes: "Ghi chú"
+        case .updates: "Bản cập nhật ứng dụng"
         case .simulator: "Simulator"
         case .cli: "npm & CLI khác"
         case .zen: "Zen"
@@ -84,9 +88,13 @@ enum AppKind: String, CaseIterable, Codable, Identifiable {
         case .figma: "Bộ nhớ đệm file thiết kế và mã"
         case .pencil: "Bộ nhớ đệm, phiên Claude và bản sao lưu của Pencil"
         case .xcode: "Dữ liệu build, hỗ trợ máy thật, gói Swift"
-        case .claude: "Job nền của Claude Code, máy ảo của Claude Desktop"
+        case .claude: "Job nền, hội thoại từng dự án, máy ảo của Claude Desktop"
+        case .codex: "Phiên hội thoại, nhật ký và runtime của Codex"
+        case .homebrew: "Bộ nhớ đệm tải về và phiên bản gói cũ"
+        case .notes: "Dữ liệu và tệp đính kèm của Ghi chú"
+        case .updates: "Bản cập nhật các ứng dụng đã tải sẵn về máy"
         case .simulator: "Máy ảo và runtime iOS"
-        case .cli: "npm, Homebrew, Firebase CLI, Codex"
+        case .cli: "npm, CocoaPods, Firebase CLI, Gradle"
         case .zen: "Bộ nhớ đệm và dữ liệu trang web"
         case .desktop: "Ảnh chụp màn hình và tệp lớn trên Desktop"
         case .downloads: "Bộ cài, tệp tải trùng, tệp cũ"
@@ -101,10 +109,13 @@ enum AppKind: String, CaseIterable, Codable, Identifiable {
         case .pencil: "dev.pencil.desktop"
         case .xcode: "com.apple.dt.Xcode"
         case .claude: "com.anthropic.claudefordesktop"
+        case .codex: "com.openai.codex"
+        case .notes: "com.apple.Notes"
+        case .updates: "com.apple.AppStore"
         case .simulator: "com.apple.iphonesimulator"
         case .zen: "app.zen-browser.zen"
         case .macos: "com.apple.systempreferences"
-        case .cli, .desktop, .downloads, .documents: nil
+        case .homebrew, .cli, .desktop, .downloads, .documents: nil
         }
     }
 
@@ -121,7 +132,7 @@ enum AppKind: String, CaseIterable, Codable, Identifiable {
     /// Ứng dụng đang mở thì bộ nhớ đệm có thể bị ghi lại ngay khi đang xoá.
     var shouldQuitBeforeCleaning: Bool {
         switch self {
-        case .figma, .pencil, .zen: true
+        case .figma, .pencil, .zen, .codex: true
         default: false
         }
     }

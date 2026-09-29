@@ -52,6 +52,7 @@ struct RootView: View {
         .sheet(isPresented: $state.confirming) { ConfirmSheet() }
         .sheet(item: $state.detailItem) { item in ItemDetailSheet(item: item) }
         .sheet(isPresented: $state.showingMachineInfo) { MachineInfoSheet() }
+        .sheet(isPresented: $state.showingTrash) { TrashSheet() }
         .confirmationDialog("Dọn Thùng rác?", isPresented: $state.confirmingTrash) {
             Button("Dọn Thùng rác", role: .destructive) { state.emptyTrash() }
         } message: {
