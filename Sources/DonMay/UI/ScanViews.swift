@@ -46,7 +46,7 @@ struct ScanGroupGrid: View {
                             .animation(.spring(duration: 0.35), value: status)
                         switch status {
                         case .done:
-                            Image(systemName: "checkmark.circle.fill").foregroundStyle(.white, Palette.safe).font(.system(size: 14))
+                            Image(systemName: "checkmark.circle.fill").foregroundStyle(.white, Palette.accent).font(.system(size: 14))
                                 .offset(x: 4, y: 4)
                         case .active:
                             ProgressView().controlSize(.mini).offset(x: 5, y: 5)
@@ -88,13 +88,13 @@ struct ScanRadar: View {
 
     var body: some View {
         ZStack {
-            Circle().stroke(Palette.safe.opacity(0.15), lineWidth: 6)
+            Circle().stroke(Palette.accent.opacity(0.15), lineWidth: 6)
             Circle()
                 .trim(from: 0, to: 0.22)
-                .stroke(AngularGradient(colors: [Palette.safe.opacity(0), Palette.safe], center: .center),
+                .stroke(AngularGradient(colors: [Palette.accent.opacity(0), Palette.accent], center: .center),
                         style: StrokeStyle(lineWidth: 6, lineCap: .round))
                 .rotationEffect(.degrees(angle))
-            Circle().stroke(Palette.safe.opacity(pulse ? 0 : 0.35), lineWidth: 2)
+            Circle().stroke(Palette.accent.opacity(pulse ? 0 : 0.35), lineWidth: 2)
                 .scaleEffect(pulse ? 1.35 : 1)
             if let logo = Brand.logo {
                 Image(nsImage: logo).resizable().padding(size * 0.14)
@@ -127,6 +127,6 @@ struct ScanBanner: View {
             }
         }
         .padding(.horizontal, 28).padding(.vertical, 10)
-        .background(Palette.safe.opacity(0.08))
+        .background(Palette.accent.opacity(0.08))
     }
 }

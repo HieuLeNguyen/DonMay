@@ -177,12 +177,12 @@ struct ItemDetailSheet: View {
                 state.choose(item, parts: checked.count == total ? nil : checked, size: checkedSize)
                 dismiss()
             }
-            .buttonStyle(.borderedProminent).tint(checked.isEmpty ? .secondary : Palette.safe)
+            .buttonStyle(.borderedProminent).tint(checked.isEmpty ? .secondary : Palette.accent)
             .keyboardShortcut(.defaultAction)
         } else {
             let selected = state.selection.contains(item.id)
             Button(selected ? "Bỏ chọn" : "Chọn để dọn") { state.toggle(item); dismiss() }
-                .buttonStyle(.borderedProminent).tint(selected ? .secondary : Palette.safe)
+                .buttonStyle(.borderedProminent).tint(selected ? .secondary : Palette.accent)
                 .keyboardShortcut(.defaultAction)
         }
     }

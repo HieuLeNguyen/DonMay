@@ -16,12 +16,12 @@ struct PerformanceView: View {
                     let pressure = Double(mem.used) / Double(max(mem.total, 1))
                     MetricCard(title: "RAM", value: "\(Format.bytes(mem.used)) / \(Format.bytes(mem.total))",
                                detail: "Nén \(Format.bytes(mem.compressed)) · swap \(Format.bytes(mem.swapUsed))",
-                               series: state.memoryHistory, color: pressure > 0.85 ? Palette.warn : Palette.safe)
+                               series: state.memoryHistory, color: pressure > 0.85 ? Palette.warn : Palette.accent)
                     MetricCard(title: "CPU", value: Format.percent(state.cpuHistory.last ?? 0),
                                detail: "\(ProcessInfo.processInfo.activeProcessorCount) nhân",
-                               series: state.cpuHistory, color: Palette.safe)
+                               series: state.cpuHistory, color: Palette.accent)
                     MetricCard(title: "GPU", value: Format.percent(state.gpuHistory.last ?? 0),
-                               detail: "Theo IOAccelerator", series: state.gpuHistory, color: Palette.safe)
+                               detail: "Theo IOAccelerator", series: state.gpuHistory, color: Palette.accent)
                     MetricCard(title: "Ổ đĩa", value: Format.bytes(state.diskFree),
                                detail: "còn trống trên \(Format.bytes(state.diskTotal))", series: [], color: Palette.alert)
                 }

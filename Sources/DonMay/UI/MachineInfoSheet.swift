@@ -25,7 +25,7 @@ struct MachineInfoSheet: View {
                     line("Đã dùng", "\(Format.bytes(used)) · \(Format.percent(Double(used) / Double(max(info.diskTotal, 1))))")
                     line("Còn trống", Format.bytes(info.diskFree))
                     MeterBar(segments: [.init(value: Double(used) / Double(max(info.diskTotal, 1)),
-                                              color: Double(info.diskFree) / Double(max(info.diskTotal, 1)) < 0.1 ? Palette.alert : Palette.safe)],
+                                              color: Double(info.diskFree) / Double(max(info.diskTotal, 1)) < 0.1 ? Palette.alert : Palette.accent)],
                              height: 8)
                 }
                 section("Thời gian chạy") {

@@ -1,10 +1,15 @@
 import SwiftUI
 
+/// Một màu nhấn (xanh của logo) cho nút và thanh; ba màu ngữ nghĩa đã giảm độ bão hoà, chỉ dùng cho
+/// icon nhỏ, chú giải và phần biểu đồ — để màn hình không bị đỏ/cam/xanh lá giành nhau sự chú ý.
 enum Palette {
-    static let safe = Color(nsColor: .systemGreen)
-    static let warn = Color(nsColor: .systemOrange)
-    static let alert = Color(nsColor: .systemRed)
+    static let accent = Color(red: 0.24, green: 0.58, blue: 0.93)
+    static let safe = Color(red: 0.33, green: 0.68, blue: 0.58)
+    static let warn = Color(red: 0.84, green: 0.63, blue: 0.29)
+    static let alert = Color(red: 0.88, green: 0.40, blue: 0.37)
     static let neutral = Color.secondary
+    static let track = Color.primary.opacity(0.08)
+    static let other = Color.primary.opacity(0.22)
 
     static func color(_ risk: Risk) -> Color {
         switch risk {

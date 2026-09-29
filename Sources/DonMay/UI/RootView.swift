@@ -115,7 +115,7 @@ struct BottomBar: View {
                 .disabled(state.selection.isEmpty)
             Button("Dọn các mục đã chọn") { state.confirming = true }
                 .buttonStyle(.borderedProminent)
-                .tint(Palette.safe)
+                .tint(Palette.accent)
                 .controlSize(.large)
                 .disabled(cannotClean)
                 .opacity(cannotClean ? 0.45 : 1)

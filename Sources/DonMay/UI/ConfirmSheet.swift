@@ -45,7 +45,7 @@ struct ConfirmSheet: View {
                 Spacer()
                 Button("Huỷ") { state.confirming = false }.keyboardShortcut(.cancelAction)
                 Button("Dọn và ghi vào Lịch sử") { Task { await state.cleanSelected() } }
-                    .buttonStyle(.borderedProminent).tint(Palette.safe)
+                    .buttonStyle(.borderedProminent).tint(Palette.accent)
                     .keyboardShortcut(.defaultAction)
                     .disabled(!irreversible.isEmpty && !Self.matchesConfirmWord(typed))
             }
