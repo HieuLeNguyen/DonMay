@@ -46,7 +46,7 @@ enum Cleaner {
                 }
                 do {
                     for path in paths where FileManager.default.fileExists(atPath: path) {
-                        try FileManager.default.removeItem(atPath: path)
+                        try moveToPurge(URL(fileURLWithPath: path))
                     }
                 } catch where entry.outcome == .packed {
                     entry.error = "Đã nén xong nhưng xoá bản gốc chưa hết: \(error.localizedDescription). Bản nén được giữ lại."
@@ -76,6 +76,56 @@ enum Cleaner {
             }
         }
     }
+
+    // MARK: - Xoá nhanh, dọn nền
+
+    /// Dời mục vào thư mục chờ xoá: cùng ổ nên chỉ là đổi tên, không phải duyệt từng tệp. Dời không được
+    /// (khác ổ, bị khoá) thì xoá thẳng.
+    static func moveToPurge(_ url: URL) throws {
+        let fm = FileManager.default
+        try fm.createDirectory(at: AppFolders.purge, withIntermediateDirectories: true)
+        let target = AppFolders.purge.appendingPathComponent(UUID().uuidString + "-" + url.lastPathComponent)
+        do {
+            try fm.moveItem(at: url, to: target)
+        } catch {
+            try forceRemove(url)
+        }
+    }
+
+    /// Xoá, và nếu vướng thư mục chỉ-đọc (gói Swift trong DerivedData để quyền r-x) hay cờ khoá thì trả
+    /// lại quyền ghi cho chính chủ rồi xoá lại.
+    static func forceRemove(_ url: URL) throws {
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: url.path) || (try? url.checkResourceIsReachable()) == true else { return }
+        do {
+            try fm.removeItem(at: url)
+        } catch {
+            _ = try? Shell.run("/usr/bin/chflags", ["-R", "nouchg", url.path])
+            _ = try? Shell.run("/bin/chmod", ["-R", "u+w", url.path])
+            do {
+                try fm.removeItem(at: url)
+            } catch {
+                throw Archiver.Failure(message: "Không có quyền xoá một số tệp trong \(url.lastPathComponent). Thoát ứng dụng đang dùng nó (ví dụ Xcode) rồi thử lại.")
+            }
+        }
+    }
+
+    /// Xoá thật mọi thứ trong thư mục chờ, ưu tiên thấp. Trả về số mục còn sót.
+    static func drainPurge(progress: @escaping @Sendable (Int) -> Void) async -> Int {
+        await Task.detached(priority: .utility) {
+            let items = AppFolders.purge.children()
+            var remaining = items.count
+            var failed = 0
+            for item in items {
+                if (try? forceRemove(item)) == nil { failed += 1 }
+                remaining -= 1
+                progress(remaining)
+            }
+            return failed
+        }.value
+    }
+
+    static var hasPendingPurge: Bool { !AppFolders.purge.children().isEmpty }
 
     private static func ensureRoomForArchive(of item: CleanItem) throws {
         let free = SystemMetrics.diskFree()

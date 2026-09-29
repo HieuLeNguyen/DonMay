@@ -33,6 +33,8 @@ final class AppState {
 
     var history: [HistorySession] = HistoryStore.load()
     var isCleaning = false
+    var purgeRemaining = 0
+    private var purgeTask: Task<Void, Never>?
     var cleanProgress = 0.0
     var cleanStep = ""
     var confirming = false
@@ -57,6 +59,7 @@ final class AppState {
             HistoryStore.save(history)
             notice = "Đã xoá \(dropped) bản nén hết hạn hoặc vượt mức cho phép."
         }
+        drainPurge()
     }
 
     // MARK: - Tổng hợp
@@ -174,7 +177,6 @@ final class AppState {
         guard !targets.isEmpty else { return }
         confirming = false
         isCleaning = true
-        let before = SystemMetrics.diskFree()
         let session = await Cleaner.clean(targets, backups: backupChoices) { value, step in
             Task { @MainActor in
                 self.cleanProgress = value
@@ -188,10 +190,29 @@ final class AppState {
         partial.removeAll()
         isCleaning = false
         let failed = session.entries.filter { $0.outcome == .failed }
-        let gained = SystemMetrics.diskFree() - before
-        notice = "Đã lấy lại \(Format.bytes(max(gained, 0)))." + (failed.isEmpty ? "" : " \(failed.count) mục không dọn được, xem Lịch sử dọn.")
+        notice = "Đã dời \(session.entries.count - failed.count) mục ra khỏi chỗ cũ, đang giải phóng dung lượng ở nền."
+            + (failed.isEmpty ? "" : " \(failed.count) mục không dọn được, xem Lịch sử dọn.")
         route = .history
+        drainPurge()
         await scan()
+    }
+
+    /// Xoá thật những gì đã dời vào thư mục chờ — chạy nền, không chặn thao tác.
+    func drainPurge() {
+        guard purgeTask == nil, Cleaner.hasPendingPurge else { return }
+        let before = SystemMetrics.diskFree()
+        purgeRemaining = AppFolders.purge.children().count
+        purgeTask = Task {
+            let failed = await Cleaner.drainPurge { remaining in
+                Task { @MainActor in self.purgeRemaining = remaining }
+            }
+            purgeRemaining = 0
+            purgeTask = nil
+            diskFree = SystemMetrics.diskFree()
+            let gained = max(diskFree - before, 0)
+            notice = "Đã giải phóng \(Format.bytes(gained))."
+                + (failed > 0 ? " \(failed) mục chưa xoá được, sẽ thử lại lần mở sau." : "")
+        }
     }
 
     func restore(session: HistorySession.ID, entry: HistoryEntry.ID) {

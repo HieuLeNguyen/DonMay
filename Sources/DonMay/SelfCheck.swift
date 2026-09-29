@@ -155,6 +155,28 @@ enum SelfCheck {
             try? fm.removeItem(at: folder)
         }
 
+        let locked = fm.homeDirectoryForCurrentUser.appendingPathComponent("Library/Caches/donmay-locked-\(UUID().uuidString)")
+        let checkout = locked.appendingPathComponent("SourcePackages/checkouts/pkg")
+        try? fm.createDirectory(at: checkout, withIntermediateDirectories: true)
+        try? payload.write(to: checkout.appendingPathComponent("Package.swift"))
+        _ = try? Shell.run("/bin/chmod", ["-R", "a-w", locked.appendingPathComponent("SourcePackages").path])
+        let lockedItem = CleanItem(id: "l", app: .xcode, name: "thư mục chỉ-đọc", reason: "", displayPath: "", size: 1, lastUsed: nil,
+                                   risk: .safe, undo: .regenerate, growth24: 0, growth7: 0, action: .files([locked.path]), regenerateHint: "")
+        let started = Date()
+        let lockedDone = DispatchSemaphore(value: 0)
+        var lockedSession: HistorySession?
+        var leftovers = -1
+        Task.detached {
+            lockedSession = await Cleaner.clean([lockedItem], backups: []) { _, _ in }
+            leftovers = await Cleaner.drainPurge { _ in }
+            lockedDone.signal()
+        }
+        lockedDone.wait()
+        expect(lockedSession?.entries.first?.outcome == .regenerated && !fm.fileExists(atPath: locked.path),
+               "Dọn dời mục đi ngay (\(Int(Date().timeIntervalSince(started) * 1000)) ms gồm cả xoá nền)")
+        expect(leftovers == 0 && !AppFolders.purge.children().contains { $0.lastPathComponent.contains("donmay-locked") },
+               "Xoá nền trả lại quyền ghi rồi xoá được thư mục chỉ-đọc")
+
         print(ok ? "Tất cả đạt" : "Có mục hỏng")
         return ok
     }

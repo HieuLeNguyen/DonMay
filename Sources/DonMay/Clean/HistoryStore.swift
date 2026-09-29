@@ -19,6 +19,8 @@ enum AppFolders {
 
     static var backups: URL { support.appendingPathComponent("Backups") }
     static var history: URL { support.appendingPathComponent("history.json") }
+    /// Chỗ dời mục vào trước khi xoá thật ở nền. Cùng ổ với thư mục home nên dời là đổi tên, tức thì.
+    static var purge: URL { support.appendingPathComponent("Purge") }
 }
 
 enum HistoryStore {

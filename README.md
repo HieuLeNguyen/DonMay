@@ -108,6 +108,7 @@ Dọn Máy **không dùng Thùng rác**: tệp trong Thùng rác vẫn chiếm n
 
 **Chính sách bản nén** (`BackupPolicy` trong `Clean/HistoryStore.swift`):
 
+- **Dọn không chặn thao tác.** Mục được dời vào `~/Library/Application Support/DonMay/Purge` (cùng ổ nên chỉ là đổi tên, tức thì), rồi xoá thật ở nền; dải mảnh ở đầu màn cho biết còn bao nhiêu mục. Gặp thư mục chỉ-đọc (gói Swift trong DerivedData) thì công cụ trả lại quyền ghi cho chính chủ rồi xoá tiếp. Mục chưa xoá được ở nền sẽ được thử lại lần mở sau.
 - Nén bằng Apple Archive, thuật toán LZFSE. Nén xong mới xoá bản gốc; nén hỏng thì bản gốc còn nguyên và không để lại tệp dở.
 - Tổng bản nén tối đa **10% dung lượng trống, không quá 2 GB**. Mục vượt mức không được tick sẵn; Ngài vẫn tự tick được.
 - Bản nén tự xoá sau **7 ngày**.

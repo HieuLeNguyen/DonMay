@@ -13,7 +13,9 @@ struct RootView: View {
                 if let notice = state.notice {
                     NoticeBar(text: notice) { state.notice = nil }
                 }
-                if state.isScanning && !state.items.isEmpty {
+                if state.isCleaning || state.purgeRemaining > 0 {
+                    CleanBanner()
+                } else if state.isScanning && !state.items.isEmpty {
                     ScanBanner()
                 }
                 ScrollView {
@@ -55,9 +57,6 @@ struct RootView: View {
         } message: {
             Text("Mọi thứ trong Thùng rác bị xoá hẳn, không hoàn tác được. Bản nén trong Lịch sử dọn không bị ảnh hưởng.")
         }
-        .overlay {
-            if state.isCleaning { CleaningView() }
-        }
         .task {
             state.startMetrics()
             await state.scan()
@@ -81,19 +80,24 @@ struct NoticeBar: View {
     }
 }
 
-struct CleaningView: View {
+/// Dọn không chặn thao tác: dải mảnh ở đầu màn, vừa lúc dời mục vừa lúc xoá thật ở nền.
+struct CleanBanner: View {
     @Environment(AppState.self) private var state
 
     var body: some View {
-        VStack(spacing: 12) {
-            ProgressView(value: state.cleanProgress).frame(width: 320)
-            Text(state.cleanStep.isEmpty ? "Đang dọn…" : "Đang dọn: \(state.cleanStep)")
-                .foregroundStyle(.secondary).lineLimit(1)
+        HStack(spacing: 12) {
+            ProgressView().controlSize(.small)
+            Text(state.isCleaning
+                 ? (state.cleanStep.isEmpty ? "Đang dọn…" : "Đang dọn · \(state.cleanStep)")
+                 : "Đang giải phóng dung lượng ở nền · còn \(state.purgeRemaining) mục")
+                .lineLimit(1).truncationMode(.middle)
+            Spacer()
+            if state.isCleaning {
+                ProgressView(value: state.cleanProgress).frame(width: 180)
+            }
         }
-        .padding(28)
-        .background(RoundedRectangle(cornerRadius: 14).fill(.regularMaterial))
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.black.opacity(0.25))
+        .padding(.horizontal, 28).padding(.vertical, 10)
+        .background(Palette.accent.opacity(0.08))
     }
 }
 
