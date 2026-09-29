@@ -6,6 +6,7 @@ cd "$(dirname "$0")/.."
 STAGE=$(mktemp -d)
 cp -R build/DonMay.app "$STAGE/Dọn Máy.app"
 ln -s /Applications "$STAGE/Applications"
+cp scripts/INSTALL.txt "$STAGE/Hướng dẫn cài - Install.txt"
 rm -f build/DonMay.dmg
 hdiutil create -volname "Dọn Máy" -srcfolder "$STAGE" -format UDZO -ov build/DonMay.dmg >/dev/null
 rm -rf "$STAGE"

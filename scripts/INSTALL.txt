@@ -1,0 +1,34 @@
+CÀI DỌN MÁY
+===========
+
+1. Kéo "Dọn Máy" vào thư mục Applications.
+2. Mở Applications, nhấp đúp "Dọn Máy". macOS báo không mở được vì ứng dụng
+   không phát hành qua App Store: bấm Xong (Done).
+3. Mở Cài đặt hệ thống › Quyền riêng tư & Bảo mật, cuộn xuống mục Bảo mật,
+   bấm "Vẫn mở" (Open Anyway) cạnh dòng "Dọn Máy", nhập mật khẩu máy.
+   Chỉ cần làm một lần.
+
+Cách nhanh bằng Terminal (thay cho bước 2–3):
+   xattr -dr com.apple.quarantine "/Applications/Dọn Máy.app"
+
+Sau khi mở: cấp Full Disk Access trong Quyền riêng tư & Bảo mật để quét đủ,
+rồi mở lại ứng dụng.
+
+Không khuyến nghị: tắt Gatekeeper cho mọi ứng dụng
+   sudo spctl --master-disable
+   rồi chọn "Mọi nơi" (Anywhere) trong Quyền riêng tư & Bảo mật.
+   Bật lại: sudo spctl --master-enable
+
+--------------------------------------------------------------------
+
+INSTALLING DỌN MÁY
+
+1. Drag "Dọn Máy" into Applications.
+2. Double-click it. macOS says it can't be opened: click Done.
+3. System Settings › Privacy & Security › Security: click "Open Anyway"
+   next to "Dọn Máy" and enter your password. Needed only once.
+
+Terminal shortcut (instead of steps 2–3):
+   xattr -dr com.apple.quarantine "/Applications/Dọn Máy.app"
+
+Then grant Full Disk Access in Privacy & Security and reopen the app.
