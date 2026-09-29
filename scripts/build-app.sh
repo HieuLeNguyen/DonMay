@@ -29,5 +29,12 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 </dict>
 </plist>
 PLIST
-codesign --force --sign - "$APP"
+# Ký ad-hoc với designated requirement chỉ theo bundle id: macOS nhớ quyền (Desktop, Documents,
+# Downloads, Full Disk Access) qua các lần build lại. Ký mặc định theo cdhash thì mỗi lần build là
+# một ứng dụng mới và macOS hỏi quyền lại từ đầu. Có chứng chỉ riêng thì đặt SIGN_IDENTITY.
+if [ -n "${SIGN_IDENTITY:-}" ]; then
+  codesign --force --sign "$SIGN_IDENTITY" "$APP"
+else
+  codesign --force --sign - -r='designated => identifier "studio.thapp.donmay"' "$APP"
+fi
 echo "Đã tạo $APP"

@@ -5,6 +5,7 @@ struct OverviewView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 30) {
+            if !state.hasFullDiskAccess { FullDiskAccessHint() }
             disk
             actions
             if !state.growing.isEmpty { growing }
@@ -167,6 +168,9 @@ private struct GrowingRow: View {
             .frame(width: 120, alignment: .trailing)
         }
         .rowSurface()
+        .contentShape(Rectangle())
+        .onTapGesture { state.detailItem = item }
+        .help("Bấm để xem chi tiết")
     }
 }
 

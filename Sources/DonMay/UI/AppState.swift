@@ -13,6 +13,13 @@ final class AppState {
     var items: [CleanItem] = []
     var isScanning = false
     var scanProgress = 0.0
+    var scanFinding: AppKind?
+    var scanStep = ""
+    var scanPlanned: [AppKind: Int] = [:]
+    var scanDone: [AppKind: Int] = [:]
+    var scanFound: [AppKind: Int64] = [:]
+    var hasFullDiskAccess = Permissions.hasFullDiskAccess
+    var detailItem: CleanItem?
     var lastScan: Date?
 
     var selection = Set<String>()
@@ -87,8 +94,14 @@ final class AppState {
         guard !isScanning else { return }
         isScanning = true
         scanProgress = 0
-        let found = await Scanner.scan { value in
-            Task { @MainActor in self.scanProgress = value }
+        scanFinding = nil
+        scanStep = ""
+        scanPlanned = [:]
+        scanDone = [:]
+        scanFound = [:]
+        hasFullDiskAccess = Permissions.hasFullDiskAccess
+        let found = await Scanner.scan { event in
+            Task { @MainActor in self.apply(event) }
         }
         items = found
         let ids = Set(found.map(\.id))
@@ -106,6 +119,27 @@ final class AppState {
         lastScan = Date()
         isScanning = false
     }
+
+    private func apply(_ event: ScanEvent) {
+        switch event {
+        case let .finding(app):
+            scanFinding = app
+            scanStep = "Đang tìm các vị trí của \(app.title)"
+        case let .planned(counts):
+            scanFinding = nil
+            scanPlanned = counts
+        case let .measuring(app, name):
+            scanStep = "\(app.title) · \(name)"
+        case let .measured(app, item):
+            scanDone[app, default: 0] += 1
+            scanFound[app, default: 0] += item?.size ?? 0
+            let total = scanPlanned.values.reduce(0, +)
+            scanProgress = total > 0 ? Double(scanDone.values.reduce(0, +)) / Double(total) : 0
+        }
+    }
+
+    var scanPlannedTotal: Int { scanPlanned.values.reduce(0, +) }
+    var scanDoneTotal: Int { scanDone.values.reduce(0, +) }
 
     // MARK: - Dọn
 

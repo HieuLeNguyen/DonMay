@@ -5,8 +5,15 @@ enum Rules {
     static let home = FileManager.default.homeDirectoryForCurrentUser
     static var library: URL { home.under("Library") }
 
-    static func all() -> [Candidate] {
-        xcode() + simulator() + claude() + zen() + figma() + pencil() + cli() + documents() + desktop() + downloads()
+    static func all(finding: (AppKind) -> Void = { _ in }) -> [Candidate] {
+        let groups: [(AppKind, () -> [Candidate])] = [
+            (.xcode, xcode), (.simulator, simulator), (.claude, claude), (.zen, zen), (.figma, figma), (.pencil, pencil),
+            (.cli, cli), (.documents, documents), (.desktop, desktop), (.downloads, downloads),
+        ]
+        return groups.flatMap { app, rule in
+            finding(app)
+            return rule()
+        }
     }
 
     // MARK: - Xcode
@@ -17,7 +24,7 @@ enum Rules {
 
         let deltas = library.under("Containers", "com.apple.CoreDevice.CoreDeviceService", "Data", "Library", "Caches",
                                    "AppInstallationBinaryDeltas")
-        if deltas.exists {
+        if Permissions.hasFullDiskAccess, deltas.exists {
             list.append(.fixed(.xcode, "Bản cài lên iPhone thật", deltas, .safe,
                                "Xcode tự tạo lại ở lần Run lên máy thật kế tiếp"))
         }

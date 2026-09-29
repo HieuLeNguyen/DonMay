@@ -143,6 +143,11 @@ struct CleanItem: Identifiable, Hashable {
     var action: RemovalAction
     var regenerateHint: String
 
+    var paths: [String] {
+        if case let .files(paths) = action { return paths }
+        return []
+    }
+
     var level: GrowthLevel {
         guard size > 0 else { return .flat }
         let ratio7 = Double(growth7) / Double(size)

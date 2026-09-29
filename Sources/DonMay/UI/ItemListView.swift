@@ -73,8 +73,6 @@ private struct ItemRow: View {
                 Text(item.displayPath).font(.caption).foregroundStyle(.tertiary).lineLimit(1).truncationMode(.middle)
                     .help(item.displayPath)
             }
-            .contentShape(Rectangle())
-            .onTapGesture { state.toggle(item) }
             .contextMenu {
                 if case let .files(paths) = item.action, let first = paths.first {
                     Button("Hiện trong Finder") { NSWorkspace.shared.selectFile(first, inFileViewerRootedAtPath: "") }
@@ -100,8 +98,12 @@ private struct ItemRow: View {
                 undo
             }
             .frame(width: 190, alignment: .leading)
+            Image(systemName: "chevron.right").foregroundStyle(.tertiary)
         }
         .rowSurface()
+        .contentShape(Rectangle())
+        .onTapGesture { state.detailItem = item }
+        .help("Bấm để xem chi tiết. Tick ô bên trái để chọn dọn.")
     }
 
     @ViewBuilder

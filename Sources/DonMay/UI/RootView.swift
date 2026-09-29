@@ -13,6 +13,9 @@ struct RootView: View {
                 if let notice = state.notice {
                     NoticeBar(text: notice) { state.notice = nil }
                 }
+                if state.isScanning && !state.items.isEmpty {
+                    ScanBanner()
+                }
                 ScrollView {
                     Group {
                         switch state.route {
@@ -45,6 +48,7 @@ struct RootView: View {
         .navigationTitle("Dọn Máy")
         .navigationSubtitle(state.lastScan.map { "Quét lúc \(Format.dateTime($0))" } ?? "")
         .sheet(isPresented: $state.confirming) { ConfirmSheet() }
+        .sheet(item: $state.detailItem) { item in ItemDetailSheet(item: item) }
         .confirmationDialog("Dọn Thùng rác?", isPresented: $state.confirmingTrash) {
             Button("Dọn Thùng rác", role: .destructive) { state.emptyTrash() }
         } message: {
@@ -73,22 +77,6 @@ struct NoticeBar: View {
         }
         .padding(.horizontal, 28).padding(.vertical, 10)
         .background(Color.primary.opacity(0.05))
-    }
-}
-
-struct ScanningView: View {
-    @Environment(AppState.self) private var state
-
-    var body: some View {
-        VStack(spacing: 12) {
-            if let logo = Brand.logo { Image(nsImage: logo).resizable().frame(width: 96, height: 96) }
-            ProgressView(value: state.scanProgress).frame(width: 280)
-            Text("Đang đo dung lượng từng vị trí…").foregroundStyle(.secondary)
-            Text("Nếu macOS hỏi quyền truy cập Desktop, Documents hoặc Downloads, hãy bấm Cho phép. Việc quét chờ tới khi Ngài trả lời.")
-                .font(.callout).foregroundStyle(.secondary).multilineTextAlignment(.center).frame(maxWidth: 360)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.regularMaterial)
     }
 }
 
@@ -128,12 +116,15 @@ struct BottomBar: View {
                 .buttonStyle(.borderedProminent)
                 .tint(Palette.safe)
                 .controlSize(.large)
-                .disabled(state.selection.isEmpty || state.isCleaning || state.isScanning)
+                .disabled(cannotClean)
+                .opacity(cannotClean ? 0.45 : 1)
         }
         .padding(.horizontal, 28).padding(.vertical, 12)
         .background(.bar)
         .overlay(alignment: .top) { Divider() }
     }
+
+    private var cannotClean: Bool { state.selection.isEmpty || state.isCleaning || state.isScanning }
 
     private var note: String {
         let items = state.selectedItems

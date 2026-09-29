@@ -52,6 +52,8 @@ open build/DonMay.app
 
 `scripts/build-app.sh` build bản release, đóng gói `build/DonMay.app` kèm biểu tượng và ký ad-hoc. Muốn dùng lâu dài thì kéo `DonMay.app` vào `/Applications`.
 
+Script ký với danh tính theo bundle id (`designated => identifier "studio.thapp.donmay"`), nên **quyền đã cấp được giữ qua các lần build lại**. Ký ad-hoc mặc định gắn danh tính với mã băm của tệp chạy: mỗi lần build là một ứng dụng mới trong mắt macOS và bị hỏi quyền lại. Có chứng chỉ Developer ID riêng thì chạy `SIGN_IDENTITY="Developer ID Application: …" scripts/build-app.sh`.
+
 ### Cách 2 — chạy thẳng khi phát triển
 
 ```bash
@@ -65,7 +67,7 @@ Mở bằng Xcode: `open Package.swift`, chọn scheme **DonMay**, bấm Run.
 | Quyền | Khi nào macOS hỏi | Để làm gì |
 | --- | --- | --- |
 | Desktop, Documents, Downloads | Lần quét đầu tiên | Tìm ảnh chụp màn hình cũ, bộ cài, bản tải trùng, thư mục build trong dự án. **Việc quét chờ tới khi Ngài bấm Cho phép.** |
-| Full Disk Access | Không tự hỏi | Đo và hiện dung lượng Thùng rác. Bật trong *System Settings › Privacy & Security › Full Disk Access*, thêm `DonMay.app`. |
+| Full Disk Access | Không tự hỏi — ứng dụng có nút *Mở cài đặt* | Quét bản cài lên iPhone thật của Xcode (nằm trong container của ứng dụng khác) và đo Thùng rác. Có quyền này thì macOS không hỏi quyền thêm lần nào. |
 | Điều khiển Finder | Lần đầu bấm *Dọn Thùng rác* | Dọn Thùng rác qua Finder. |
 
 Không cấp Full Disk Access thì mọi tính năng khác vẫn chạy; thẻ Thùng rác chỉ ghi "Cần quyền Full Disk Access để đo".
@@ -86,7 +88,9 @@ Không cấp Full Disk Access thì mọi tính năng khác vẫn chạy; thẻ T
 4. **Lịch sử dọn** — xem từng lần dọn, khôi phục bản nén, hoặc xoá bản nén để lấy lại chỗ.
 5. **Hiệu năng** — RAM, CPU, GPU cập nhật mỗi 2 giây, và các tiến trình dùng nhiều CPU nhất.
 
-Chuột phải vào một mục trong danh sách để *Hiện trong Finder*.
+**Bấm vào một mục** (ở danh sách hay ở khối *Chỗ đang phình to*) để mở màn chi tiết: vì sao mục được xếp mức đó, phần ghi mới 24 giờ / 7 ngày, dùng lần cuối, dọn thì mất gì, các đường dẫn kèm nút *Hiện trong Finder*, và **12 thành phần lớn nhất bên trong** (nhấp đúp để mở trong Finder). Tick ô bên trái để chọn dọn mà không mở chi tiết.
+
+Khi quét, màn hình cho biết đang đo vị trí nào, đã xong bao nhiêu trên tổng số, và nhóm nào đã xong kèm dung lượng. Quét lại khi đã có kết quả thì chỉ hiện một dải mảnh ở đầu màn, danh sách cũ vẫn xem được.
 
 ## Cách dọn và khôi phục
 
