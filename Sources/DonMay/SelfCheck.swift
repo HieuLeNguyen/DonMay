@@ -110,6 +110,24 @@ enum SelfCheck {
         expect(refusedSession?.entries.first?.outcome == .failed && fm.fileExists(atPath: fm.homeDirectoryForCurrentUser.appendingPathComponent("Pictures").path),
                "Cleaner từ chối đường dẫn ngoài danh sách, Pictures còn nguyên")
 
+        let oldArchive = fm.temporaryDirectory.appendingPathComponent("donmay-old-\(UUID().uuidString).aar")
+        let freshArchive = fm.temporaryDirectory.appendingPathComponent("donmay-fresh-\(UUID().uuidString).aar")
+        fm.createFile(atPath: oldArchive.path, contents: Data([1]))
+        fm.createFile(atPath: freshArchive.path, contents: Data([1]))
+        func packedEntry(_ path: URL, expires: Date) -> HistoryEntry {
+            HistoryEntry(app: .zen, name: "t", paths: ["/x"], size: 1, outcome: .packed, regenerateHint: "",
+                         archivePath: path.path, archiveSize: 1, expiresAt: expires)
+        }
+        var sessions = [
+            HistorySession(date: Date().addingTimeInterval(-8 * 86_400), entries: [packedEntry(oldArchive, expires: Date().addingTimeInterval(-86_400))]),
+            HistorySession(date: Date(), entries: [packedEntry(freshArchive, expires: Date().addingTimeInterval(7 * 86_400))]),
+        ]
+        _ = Cleaner.purge(&sessions)
+        expect(sessions[0].entries[0].outcome == .expired && !fm.fileExists(atPath: oldArchive.path), "Bản nén hết hạn bị xoá")
+        expect(sessions[1].entries[0].outcome == .packed && fm.fileExists(atPath: freshArchive.path),
+               "Bản nén vừa tạo được giữ dù ổ đang gần đầy")
+        try? fm.removeItem(at: freshArchive)
+
         print(ok ? "Tất cả đạt" : "Có mục hỏng")
         return ok
     }

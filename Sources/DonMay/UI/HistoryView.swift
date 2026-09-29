@@ -50,7 +50,7 @@ struct HistoryView: View {
                     Text("\(Format.bytes(state.archivesInUse)) / \(Format.bytes(state.backupBudget)) cho phép").monospacedDigit()
                 }
                 MeterBar(segments: [.init(value: Double(state.archivesInUse) / Double(max(state.backupBudget, 1)), color: Palette.safe)], height: 8)
-                Text("Mức cho phép là 10% dung lượng trống, tối đa 2 GB. Khi ổ còn dưới \(Format.bytes(BackupPolicy.minimumFree)), bản nén cũ nhất bị xoá trước.")
+                Text("Mức cho phép là 10% dung lượng trống, tối đa 2 GB. Khi ổ còn dưới \(Format.bytes(BackupPolicy.lowDiskFree)), bản nén cũ hơn \(BackupPolicy.graceHours) giờ bị xoá trước, bản cũ nhất đi trước.")
                     .font(.callout).foregroundStyle(.secondary)
                 Button("Xoá mọi bản nén · lấy lại \(Format.bytes(state.archivesInUse))") { state.dropAllArchives() }
                     .disabled(state.archivesInUse == 0)

@@ -4,10 +4,11 @@ import SwiftUI
 @main
 struct DonMayApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
-    @State private var state = AppState()
+    @State private var state: AppState
 
     init() {
         SelfCheck.runIfRequested()
+        _state = State(initialValue: AppState())
     }
 
     var body: some Scene {

@@ -43,8 +43,13 @@ enum Cleaner {
                     entry.outcome = .irreversible
                     entry.regenerateHint = "Đã xoá không sao lưu"
                 }
-                for path in paths where FileManager.default.fileExists(atPath: path) {
-                    try FileManager.default.removeItem(atPath: path)
+                do {
+                    for path in paths where FileManager.default.fileExists(atPath: path) {
+                        try FileManager.default.removeItem(atPath: path)
+                    }
+                } catch where entry.outcome == .packed {
+                    entry.error = "Đã nén xong nhưng xoá bản gốc chưa hết: \(error.localizedDescription). Bản nén được giữ lại."
+                    return entry
                 }
             }
         } catch {
@@ -98,7 +103,8 @@ enum Cleaner {
         return dropped
     }
 
-    /// Xoá bản nén hết hạn; ổ còn dưới mức tối thiểu thì xoá bản cũ nhất trước. Trả về số bản đã xoá.
+    /// Xoá bản nén hết hạn. Ổ còn dưới `lowDiskFree` thì xoá bản cũ nhất trước, nhưng không đụng bản
+    /// tạo trong `graceHours` giờ qua — nếu không, trên ổ gần đầy bản nén vừa tạo sẽ mất ngay. Trả về số bản đã xoá.
     static func purge(_ sessions: inout [HistorySession]) -> Int {
         var dropped = 0
         let now = Date()
@@ -110,9 +116,10 @@ enum Cleaner {
             }
         }
         let packed = sessions.indices.flatMap { s in sessions[s].entries.indices.map { (s, $0) } }
-            .filter { sessions[$0.0].entries[$0.1].outcome == .packed }
+            .filter { sessions[$0.0].entries[$0.1].outcome == .packed
+                && sessions[$0.0].date < now.addingTimeInterval(-Double(BackupPolicy.graceHours) * 3600) }
             .sorted { sessions[$0.0].date < sessions[$1.0].date }
-        for (s, e) in packed where SystemMetrics.diskFree() < BackupPolicy.minimumFree {
+        for (s, e) in packed where SystemMetrics.diskFree() < BackupPolicy.lowDiskFree {
             sessions[s].entries[e] = dropArchive(sessions[s].entries[e])
             dropped += 1
         }

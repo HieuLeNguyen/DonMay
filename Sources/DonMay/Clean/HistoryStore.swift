@@ -3,7 +3,8 @@ import Foundation
 enum BackupPolicy {
     static let keepDays = 7
     static let maxBudget: Int64 = 2 * .gb
-    static let minimumFree: Int64 = 5 * .gb
+    static let lowDiskFree: Int64 = 2 * .gb
+    static let graceHours = 24
 
     /// 10% dung lượng trống, tối đa 2 GB.
     static func budget(free: Int64) -> Int64 { min(maxBudget, free / 10) }

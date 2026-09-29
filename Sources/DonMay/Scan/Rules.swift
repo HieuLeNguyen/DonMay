@@ -190,9 +190,9 @@ enum Rules {
                                   lastUsed: updated) { m in
                 let recent = (updated ?? m.lastModified ?? .distantPast) > Date().addingTimeInterval(-30 * 60)
                 switch state?.state {
-                case "working" where recent, "active" where recent:
+                case "working", "active", "running":
                     return (.warn, "Job đang chạy. Chỉ xoá khi job đã xong")
-                case "blocked":
+                case "blocked", "waiting":
                     return (.warn, "Job đang chờ Ngài trả lời")
                 default:
                     return recent ? (.warn, "Job vừa chạy trong 30 phút qua") : (.safe, "Job đã kết thúc")
@@ -313,14 +313,21 @@ enum Rules {
 
         return found.map { folder in
             let project = folder.deletingLastPathComponent()
+            let tracked = isTrackedByGit(folder)
             let projectActive = (project.modificationDate ?? .distantPast) > Date().addingTimeInterval(-7 * 86_400)
             return Candidate(app: .documents, name: "\(folder.lastPathComponent) · \(project.lastPathComponent)", urls: [folder],
                              regenerateHint: "Build lại hoặc cài lại gói trong dự án") { m in
+                if tracked { return (.keep, "Có tệp được git theo dõi, có thể là mã nguồn chứ không phải sản phẩm build") }
                 let recent = projectActive || (m.lastModified ?? .distantPast) > Date().addingTimeInterval(-7 * 86_400)
                 return recent ? (.warn, "Dự án đang làm. Tạo lại được nhưng mất thời gian")
                               : (.safe, "Sản phẩm build, tạo lại được")
             }
         }
+    }
+
+    private static func isTrackedByGit(_ folder: URL) -> Bool {
+        let data = try? Shell.run("/usr/bin/git", ["-C", folder.deletingLastPathComponent().path, "ls-files", "--", folder.lastPathComponent])
+        return !(data ?? Data()).isEmpty
     }
 
     private static let screenshotPrefixes = ["Screenshot", "Screen Shot", "Ảnh màn hình", "Bản ghi màn hình", "Screen Recording", "Simulator Screen"]

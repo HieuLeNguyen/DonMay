@@ -127,7 +127,7 @@ struct BottomBar: View {
                 .buttonStyle(.borderedProminent)
                 .tint(Palette.safe)
                 .controlSize(.large)
-                .disabled(state.selection.isEmpty || state.isCleaning)
+                .disabled(state.selection.isEmpty || state.isCleaning || state.isScanning)
         }
         .padding(.horizontal, 28).padding(.vertical, 12)
         .background(.bar)
