@@ -8,6 +8,7 @@ let package = Package(
         .executableTarget(
             name: "DonMay",
             path: "Sources/DonMay",
+            resources: [.copy("Resources/AppIcon.png")],
             linkerSettings: [.linkedFramework("IOKit")]
         ),
     ]

@@ -24,6 +24,7 @@ struct DonMayApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
+        if let logo = Brand.logo { NSApp.applicationIconImage = logo }
         NSApp.activate(ignoringOtherApps: true)
     }
 

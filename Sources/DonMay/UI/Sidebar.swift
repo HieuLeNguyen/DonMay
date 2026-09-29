@@ -6,6 +6,15 @@ struct Sidebar: View {
     var body: some View {
         @Bindable var state = state
         VStack(spacing: 0) {
+            HStack(spacing: 10) {
+                if let logo = Brand.logo { Image(nsImage: logo).resizable().frame(width: 34, height: 34) }
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("Dọn Máy").font(.headline)
+                    Text("Dọn rác cho máy Mac").font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer()
+            }
+            .padding(.horizontal, 16).padding(.top, 4).padding(.bottom, 6)
             List(selection: Binding(get: { state.route }, set: { if let r = $0 { state.route = r; state.filter = nil; state.query = "" } })) {
                 Section {
                     Label("Tổng quan", systemImage: "chart.pie").tag(Route.overview)

@@ -81,6 +81,7 @@ struct ScanningView: View {
 
     var body: some View {
         VStack(spacing: 12) {
+            if let logo = Brand.logo { Image(nsImage: logo).resizable().frame(width: 96, height: 96) }
             ProgressView(value: state.scanProgress).frame(width: 280)
             Text("Đang đo dung lượng từng vị trí…").foregroundStyle(.secondary)
             Text("Nếu macOS hỏi quyền truy cập Desktop, Documents hoặc Downloads, hãy bấm Cho phép. Việc quét chờ tới khi Ngài trả lời.")
