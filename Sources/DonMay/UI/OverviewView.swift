@@ -5,13 +5,14 @@ import SwiftUI
 /// từng nhóm đang ra sao, và danh sách cảnh báo bấm vào được.
 struct OverviewView: View {
     @Environment(AppState.self) private var state
+    @State private var appeared = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             Grid(horizontalSpacing: 20) {
                 GridRow {
-                    DiskCard().frame(width: 300)
-                    GrowthCard()
+                    DiskCard().frame(width: 300).entrance(appeared, order: 0)
+                    GrowthCard().entrance(appeared, order: 1)
                 }
             }
             HStack(alignment: .top, spacing: 20) {
@@ -19,6 +20,48 @@ struct OverviewView: View {
                 AlertList().frame(width: 360)
             }
         }
+        .environment(\.overviewAppeared, appeared)
+        .onAppear { appeared = true }
+    }
+}
+
+private extension EnvironmentValues {
+    @Entry var overviewAppeared = false
+}
+
+private extension View {
+    func entrance(_ appeared: Bool, order: Int) -> some View {
+        modifier(Entrance(appeared: appeared, delay: Double(order) * 0.06))
+    }
+
+    func hoverLift() -> some View {
+        modifier(HoverLift())
+    }
+}
+
+private struct Entrance: ViewModifier {
+    let appeared: Bool
+    let delay: Double
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(appeared ? 1 : 0)
+            .offset(y: appeared || reduceMotion ? 0 : 8)
+            .blur(radius: appeared || reduceMotion ? 0 : 4)
+            .animation(.smooth(duration: 0.45).delay(reduceMotion ? 0 : delay), value: appeared)
+    }
+}
+
+private struct HoverLift: ViewModifier {
+    @State private var hovering = false
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(hovering ? 1.015 : 1)
+            .shadow(color: .black.opacity(hovering ? 0.08 : 0), radius: 10, y: 4)
+            .animation(.snappy(duration: 0.2), value: hovering)
+            .onHover { hovering = $0 }
     }
 }
 
@@ -27,6 +70,7 @@ struct OverviewView: View {
 /// Biểu đồ tròn cơ cấu ổ đĩa: phần dọn được nằm ngay cạnh phần còn trống, nên nhìn là thấy dọn xong ổ rộng ra bao nhiêu.
 private struct DiskCard: View {
     @Environment(AppState.self) private var state
+    @Environment(\.overviewAppeared) private var appeared
 
     private struct Slice: Identifiable {
         let id: String
@@ -45,21 +89,30 @@ private struct DiskCard: View {
             Slice(id: "warn", title: L("Cần cân nhắc", "Review first"), value: warn, color: Palette.warn),
             Slice(id: "other", title: L("Hệ thống và dữ liệu", "System and data"), value: max(used - safe - warn, 0), color: Palette.other),
         ]
+        let sweep = appeared ? 1.0 : 0.0
+        let shown = slices.map { max(Double($0.value), Double(state.diskTotal) * 0.004) }
+        let rest = Slice(id: "rest", title: "", value: 0, color: .clear)
         Card {
             VStack(spacing: 14) {
                 ZStack {
-                    Chart(slices) { slice in
-                        SectorMark(angle: .value(slice.title, max(Double(slice.value), Double(state.diskTotal) * 0.004)),
-                                   innerRadius: .ratio(0.72), angularInset: 1.5)
+                    Chart(Array(zip(slices, shown)) + [(rest, shown.reduce(0, +) * (1 - sweep))], id: \.0.id) { slice, value in
+                        SectorMark(angle: .value(slice.title, value * (slice.id == "rest" ? 1 : sweep)),
+                                   innerRadius: .ratio(0.72), angularInset: slice.id == "rest" ? 0 : 1.5)
                             .cornerRadius(3)
                             .foregroundStyle(slice.color)
                     }
                     .chartLegend(.hidden)
+                    .animation(.smooth(duration: 0.8).delay(0.1), value: appeared)
                     VStack(spacing: 2) {
                         Text(Format.bytes(state.diskFree)).font(.system(size: 24, weight: .bold)).monospacedDigit()
                             .foregroundStyle(low ? Palette.alert : .primary)
+                            .contentTransition(.numericText())
+                            .animation(.smooth, value: state.diskFree)
                         Text(L("còn trống", "free")).font(.caption).foregroundStyle(.secondary)
                     }
+                    .opacity(appeared ? 1 : 0)
+                    .scaleEffect(appeared ? 1 : 0.94)
+                    .animation(.smooth(duration: 0.45).delay(0.35), value: appeared)
                 }
                 .frame(width: 168, height: 168)
                 VStack(spacing: 6) {
@@ -69,6 +122,8 @@ private struct DiskCard: View {
                             Text(slice.title).foregroundStyle(.secondary)
                             Spacer()
                             Text(Format.bytes(slice.value)).monospacedDigit()
+                                .contentTransition(.numericText())
+                                .animation(.smooth, value: slice.value)
                         }
                         .font(.callout)
                     }
@@ -90,6 +145,7 @@ private struct DiskCard: View {
 
 private struct GrowthCard: View {
     @Environment(AppState.self) private var state
+    @Environment(\.overviewAppeared) private var appeared
 
     var body: some View {
         let rows = AppKind.allCases
@@ -104,12 +160,15 @@ private struct GrowthCard: View {
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                     Text(L("Ghi mới 7 ngày qua", "Written in the last 7 days")).font(.title3.weight(.semibold))
                     Text(Format.bytes(total)).font(.system(size: 24, weight: .bold)).monospacedDigit()
+                        .contentTransition(.numericText())
+                        .animation(.smooth, value: total)
                     Text(L("theo ngày sửa tệp", "by file modification date")).font(.callout).foregroundStyle(.secondary)
                 }
                 if rows.isEmpty {
                     Text(L("Chưa có vị trí nào được ghi thêm trong 7 ngày.", "Nothing has grown in the last 7 days.")).foregroundStyle(.secondary)
                 }
-                ForEach(Array(rows), id: \.0) { app, growth, level in
+                ForEach(Array(rows.enumerated()), id: \.element.0) { index, row in
+                    let (app, growth, level) = row
                     Button { state.route = .app(app) } label: {
                         HStack(spacing: 12) {
                             HStack(spacing: 8) {
@@ -117,7 +176,9 @@ private struct GrowthCard: View {
                                 Text(app.title).lineLimit(1)
                             }
                             .frame(width: 150, alignment: .leading)
-                            MeterBar(segments: [.init(value: Double(growth) / largest, color: Palette.accent.opacity(level == .flat ? 0.35 : 0.85))], height: 8)
+                            MeterBar(segments: [.init(value: Double(growth) / largest, color: Palette.accent.opacity(level == .flat ? 0.35 : 0.85))], height: 8,
+                                     fill: appeared ? 1 : 0)
+                                .animation(.smooth(duration: 0.6).delay(0.2 + Double(index) * 0.05), value: appeared)
                             HStack(spacing: 5) {
                                 GrowthIcon(level: level, size: 10)
                                 Text("+\(Format.bytes(growth))").fontWeight(.medium).monospacedDigit()
@@ -138,13 +199,17 @@ private struct GrowthCard: View {
 
 private struct GroupGrid: View {
     @Environment(AppState.self) private var state
+    @Environment(\.overviewAppeared) private var appeared
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(L("Theo nhóm", "By group")).font(.title3.weight(.semibold))
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 3), spacing: 12) {
-                ForEach(AppKind.allCases.filter { state.size(of: $0) > 0 }.sorted { state.size(of: $0) > state.size(of: $1) }) { app in
+                let apps = AppKind.allCases.filter { state.size(of: $0) > 0 }.sorted { state.size(of: $0) > state.size(of: $1) }
+                ForEach(Array(apps.enumerated()), id: \.element) { index, app in
                     GroupCard(app: app)
+                        .hoverLift()
+                        .entrance(appeared, order: 2 + min(index, 8))
                 }
             }
         }
@@ -188,6 +253,7 @@ private struct GroupCard: View {
 
 private struct AlertList: View {
     @Environment(AppState.self) private var state
+    @Environment(\.overviewAppeared) private var appeared
 
     struct Alert: Identifiable {
         let id: String
@@ -206,7 +272,7 @@ private struct AlertList: View {
             if alerts.isEmpty {
                 Card { Label(L("Không có gì đáng lo.", "Nothing to worry about."), systemImage: "checkmark.circle").foregroundStyle(Palette.safe) }
             }
-            ForEach(alerts) { alert in
+            ForEach(Array(alerts.enumerated()), id: \.element.id) { index, alert in
                 Button {
                     if let item = alert.item { state.detailItem = item } else { alert.action?() }
                 } label: {
@@ -229,8 +295,12 @@ private struct AlertList: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .hoverLift()
+                .entrance(appeared, order: 3 + index)
+                .transition(.opacity.combined(with: .offset(y: 8)))
             }
         }
+        .animation(.smooth(duration: 0.35), value: alerts.map(\.id))
     }
 
     private var alerts: [Alert] {

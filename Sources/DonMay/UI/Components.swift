@@ -83,11 +83,14 @@ struct GrowthIcon: View {
 
     var body: some View {
         if level != .flat {
-            Image(systemName: level.symbol)
-                .font(.system(size: size, weight: .heavy))
-                .foregroundStyle(Palette.color(level))
-                .help(level.title)
-                .accessibilityLabel(level.title)
+            TimelineView(.periodic(from: .now, by: level == .spike ? 1.6 : 3)) { context in
+                Image(systemName: level.symbol)
+                    .font(.system(size: size, weight: .heavy))
+                    .foregroundStyle(Palette.color(level))
+                    .symbolEffect(.bounce.up.byLayer, value: context.date)
+            }
+            .help(level.title)
+            .accessibilityLabel(level.title)
         }
     }
 }
@@ -124,12 +127,14 @@ struct MeterBar: View {
 
     let segments: [Segment]
     var height: CGFloat = 12
+    var fill: Double = 1
 
     var body: some View {
         GeometryReader { geo in
             HStack(spacing: 0) {
-                ForEach(segments) { segment in
-                    segment.color.frame(width: max(0, geo.size.width * min(segment.value, 1)))
+                ForEach(segments.indices, id: \.self) { index in
+                    let segment = segments[index]
+                    segment.color.frame(width: max(0, geo.size.width * min(segment.value, 1) * fill))
                 }
                 Spacer(minLength: 0)
             }
